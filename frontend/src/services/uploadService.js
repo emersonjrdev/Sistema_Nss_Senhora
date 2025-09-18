@@ -1,10 +1,13 @@
+// frontend/src/services/uploadService.js
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 export const uploadService = {
   async uploadImage(file) {
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:5000/api/upload", {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -14,10 +17,10 @@ export const uploadService = {
       }
 
       const data = await response.json();
-      return data.url; // backend retorna a URL da imagem
-    } catch (error) {
-      console.error("Erro no upload:", error);
-      throw error;
+      return data.url;
+    } catch (err) {
+      console.error("Erro no upload:", err);
+      throw err;
     }
   },
 };
