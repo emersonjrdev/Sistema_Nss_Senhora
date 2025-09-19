@@ -1,3 +1,4 @@
+// routes/user.js
 const express = require("express");
 const User = require("../models/User");
 
@@ -6,16 +7,16 @@ const router = express.Router();
 // Criar usuário → POST /api/user
 router.post("/", async (req, res) => {
   try {
-    const { name, email, photo } = req.body;
-    const newUser = await User.create({ name, email, photo });
+    const { name, photo, funcao, inicio, local } = req.body;
+    const newUser = await User.create({ name, photo, funcao, inicio, local });
     res.status(201).json(newUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Listar todos usuários → GET /api/user
-router.get("/", async (req, res) => {
+// Listar todos usuários → GET /api/user/users
+router.get("/users", async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
     res.json(users);
@@ -38,7 +39,11 @@ router.get("/:id", async (req, res) => {
 // Atualizar usuário → PUT /api/user/:id
 router.put("/:id", async (req, res) => {
   try {
-    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
