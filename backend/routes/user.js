@@ -15,8 +15,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Listar todos usuários → GET /api/user/users
-router.get("/users", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
     res.json(users);
