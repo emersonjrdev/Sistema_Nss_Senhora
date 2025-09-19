@@ -3,8 +3,6 @@ import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
 
 export default function ServerForm({ editing, onSaved }) {
-  console.log("🟢 ServerForm montado"); // Log ao renderizar componente
-
   const [name, setName] = useState("");
   const [funcao, setFuncao] = useState("");
   const [inicio, setInicio] = useState("");
@@ -12,8 +10,15 @@ export default function ServerForm({ editing, onSaved }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
+  // 👇 loga variáveis logo no carregamento
   useEffect(() => {
-    console.log("🔄 useEffect disparado, editing:", editing);
+    console.log("🔥 Variáveis no build:", import.meta.env);
+    console.log("🌍 API_BASE:", import.meta.env.VITE_API_URL);
+    console.log("☁️ CLOUDINARY_URL:", import.meta.env.VITE_CLOUDINARY_URL);
+    console.log("☁️ CLOUDINARY_PRESET:", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+  }, []);
+
+  useEffect(() => {
     if (editing) {
       setName(editing.name || "");
       setFuncao(editing.funcao || "");
@@ -29,7 +34,6 @@ export default function ServerForm({ editing, onSaved }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    console.log("🟡 handleSubmit disparado");
 
     if (!name.trim()) {
       alert("Nome é obrigatório");
@@ -41,14 +45,14 @@ export default function ServerForm({ editing, onSaved }) {
       let photo = editing?.photo || null;
 
       if (file) {
-        console.log("📤 Subindo arquivo para Cloudinary:", file.name);
         if (file.size > 5 * 1024 * 1024) {
           alert("A imagem deve ter menos de 5MB");
           setUploading(false);
           return;
         }
+        console.log("📤 Enviando arquivo para Cloudinary:", file.name);
         photo = await uploadService.uploadImage(file);
-        console.log("✅ Upload concluído:", photo);
+        console.log("✅ Foto recebida do Cloudinary:", photo);
       }
 
       const userData = {
@@ -58,14 +62,13 @@ export default function ServerForm({ editing, onSaved }) {
         inicio: inicio || null,
         local: local.trim(),
       };
-      console.log("📦 Dados prontos para envio:", userData);
+
+      console.log("📦 Dados sendo enviados:", userData);
 
       if (editing?._id) {
-        console.log("✏️ Atualizando usuário ID:", editing._id);
         await storageService.updateUser(editing._id, userData);
         alert("Atualizado com sucesso!");
       } else {
-        console.log("➕ Criando novo usuário");
         await storageService.createUser(userData);
         alert("Usuário cadastrado!");
       }
@@ -86,11 +89,7 @@ export default function ServerForm({ editing, onSaved }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="form"
-      onClick={() => console.log("🖱 Clique detectado no form")}
-    >
+    <form onSubmit={handleSubmit} className="form">
       <label>
         Nome
         <input
@@ -142,27 +141,18 @@ export default function ServerForm({ editing, onSaved }) {
           type="file"
           name="foto"
           accept="image/*"
-          onChange={(e) => {
-            console.log("📂 Arquivo selecionado:", e.target.files[0]);
-            setFile(e.target.files[0]);
-          }}
+          onChange={(e) => setFile(e.target.files[0])}
         />
       </label>
 
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button
-          type="submit"
-          className="btn"
-          disabled={uploading}
-          onClick={() => console.log("🖱 Cliquei em Salvar/Atualizar")}
-        >
+        <button type="submit" className="btn" disabled={uploading}>
           {uploading ? "Enviando..." : editing ? "Atualizar" : "Salvar"}
         </button>
         <button
           type="button"
           className="btn secondary"
           onClick={() => {
-            console.log("🧹 Limpar formulário");
             setName("");
             setFuncao("");
             setInicio("");
