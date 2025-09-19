@@ -111,8 +111,8 @@ export default function ServerForm({ editing, onSaved }) {
         >
           <option value="">Selecione a função</option>
           <option value="Acólito">Acólito</option>
-          <option value="Leitor">Leitor</option>
-          <option value="Ministro">Ministro</option>
+          <option value="Leitor">Filhas de Maria</option>
+          <option value="Ministro">Cerimoniário</option>
           <option value="Coroinha">Coroinha</option>
         </select>
       </label>
