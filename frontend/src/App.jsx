@@ -4,6 +4,8 @@ import ServerForm from "./components/ServerForm";
 import { storageService } from "../src/services/storageService";
 import LogoParoquia from "./assets/logo-paroquia.jpeg";
 
+console.log("🚀 App carregou!");
+//aaaa
 export default function App() {
   console.log("🚀 App carregado, variáveis:", import.meta.env);
 
