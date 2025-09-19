@@ -26,21 +26,23 @@ const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.
 if (!MONGODB_URI) {
   console.error('❌ MONGODB_URI not set. Set it in your environment (.env or Render).');
 } else {
-  mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+ mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  dbName: "igreja" // 👈 força usar o banco certo
+})
+  .then(async () => {
+    console.log('✅ Conectado ao MongoDB Atlas');
+    try {
+      console.log('📂 Database Name:', mongoose.connection.db.databaseName);
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      console.log('📑 Collections:', collections.map(c => c.name));
+    } catch (e) {
+      console.log('ℹ️ Não foi possível listar collections:', e.message);
+    }
   })
-    .then(async () => {
-      console.log('✅ Conectado ao MongoDB Atlas');
-      try {
-        console.log('📂 Database Name:', mongoose.connection.db.databaseName);
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        console.log('📑 Collections:', collections.map(c => c.name));
-      } catch (e) {
-        console.log('ℹ️ Não foi possível listar collections:', e.message);
-      }
-    })
-    .catch(err => console.error('❌ Erro ao conectar no MongoDB:', err));
+  .catch(err => console.error('❌ Erro ao conectar no MongoDB:', err));
+
 }
 
 const PORT = process.env.PORT || 5000;
