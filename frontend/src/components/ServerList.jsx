@@ -3,29 +3,29 @@ import { storageService } from "../services/storageService";
 import DetailsModal from "./DetailsModal";
 
 export default function ServerList({ onEdit, refreshTrigger }) {
-  const [servidores, setServidores] = useState([]);
+  const [users, setUsers] = useState([]);
   const [filtroNome, setFiltroNome] = useState("");
   const [filtroFuncao, setFiltroFuncao] = useState("");
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    loadServers();
+    loadUsers();
   }, [refreshTrigger, filtroNome, filtroFuncao]);
 
-  function loadServers() {
-    const servers = storageService.searchServers({
-      nome: filtroNome,
-      funcao: filtroFuncao
+  async function loadUsers() {
+    const result = await storageService.searchUsers({
+      name: filtroNome,
+      funcao: filtroFuncao,
     });
-    setServidores(servers);
+    setUsers(result);
   }
 
-  function handleDelete(id) {
-    if (!confirm("Deseja remover este servidor?")) return;
+  async function handleDelete(id) {
+    if (!confirm("Deseja remover este usuário?")) return;
     try {
-      storageService.deleteServer(id);
+      await storageService.deleteUser(id);
       alert("Removido com sucesso!");
-      loadServers();
+      loadUsers();
     } catch (err) {
       console.error(err);
       alert("Erro ao remover: " + err.message);
@@ -35,15 +35,15 @@ export default function ServerList({ onEdit, refreshTrigger }) {
   return (
     <div>
       <div className="filters">
-        <input 
-          placeholder="🔍 Pesquisar por nome" 
-          value={filtroNome} 
-          onChange={e => setFiltroNome(e.target.value)} 
+        <input
+          placeholder="🔍 Pesquisar por nome"
+          value={filtroNome}
+          onChange={(e) => setFiltroNome(e.target.value)}
         />
-        <input 
-          placeholder="🔍 Pesquisar por função" 
-          value={filtroFuncao} 
-          onChange={e => setFiltroFuncao(e.target.value)} 
+        <input
+          placeholder="🔍 Pesquisar por função"
+          value={filtroFuncao}
+          onChange={(e) => setFiltroFuncao(e.target.value)}
         />
       </div>
 
@@ -60,30 +60,52 @@ export default function ServerList({ onEdit, refreshTrigger }) {
             </tr>
           </thead>
           <tbody>
-            {servidores.length === 0 && (
+            {users.length === 0 && (
               <tr>
                 <td colSpan="6" className="empty-state">
-                  <div>📋 Nenhum servidor encontrado</div>
-                  <small>Cadastre o primeiro servidor no formulário ao lado</small>
+                  <div>📋 Nenhum usuário encontrado</div>
+                  <small>Cadastre o primeiro usuário no formulário ao lado</small>
                 </td>
               </tr>
             )}
-            {servidores.map(s => (
-              <tr key={s.id} className="server-row">
+            {users.map((u) => (
+              <tr key={u._id} className="server-row">
                 <td>
-                  {s.photoURL ? 
-                    <img src={s.photoURL} alt="foto" className="thumb" /> : 
+                  {u.photo ? (
+                    <img src={u.photo} alt="foto" className="thumb" />
+                  ) : (
                     <div className="thumb-placeholder">👤</div>
-                  }
+                  )}
                 </td>
-                <td className="nome-cell">{s.nome}</td>
-                <td><span className="funcao-badge">{s.funcao}</span></td>
-                <td>{s.inicio ? new Date(s.inicio).toLocaleDateString('pt-BR') : "-"}</td>
-                <td>{s.local || "-"}</td>
+                <td className="nome-cell">{u.name}</td>
+                <td>
+                  <span className="funcao-badge">{u.funcao}</span>
+                </td>
+                <td>
+                  {u.inicio
+                    ? new Date(u.inicio).toLocaleDateString("pt-BR")
+                    : "-"}
+                </td>
+                <td>{u.local || "-"}</td>
                 <td className="actions">
-                  <button onClick={() => setSelected(s)} className="btn small info">👀</button>
-                  <button onClick={() => onEdit && onEdit(s)} className="btn small">✏️</button>
-                  <button onClick={() => handleDelete(s.id)} className="btn small danger">🗑️</button>
+                  <button
+                    onClick={() => setSelected(u)}
+                    className="btn small info"
+                  >
+                    👀
+                  </button>
+                  <button
+                    onClick={() => onEdit && onEdit(u)}
+                    className="btn small"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDelete(u._id)}
+                    className="btn small danger"
+                  >
+                    🗑️
+                  </button>
                 </td>
               </tr>
             ))}
@@ -91,7 +113,9 @@ export default function ServerList({ onEdit, refreshTrigger }) {
         </table>
       </div>
 
-      {selected && <DetailsModal server={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <DetailsModal server={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }
