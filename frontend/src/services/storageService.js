@@ -27,7 +27,7 @@ export const storageService = {
   async loadUsers() {
     if (API_BASE) {
       try {
-        return await apiRequest("/api/user");
+        return await apiRequest("/api/user/users");
       } catch (err) {
         console.warn("API indisponível, usando localStorage:", err.message);
         const data = localStorage.getItem(STORAGE_KEY);
