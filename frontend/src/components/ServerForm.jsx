@@ -22,7 +22,8 @@ export default function ServerForm({ editing, onSaved }) {
     if (editing) {
       setName(editing.name || "");
       setFuncao(editing.funcao || "");
-      setInicio(editing.inicio || "");
+      // 👇 força exibir apenas YYYY-MM-DD
+      setInicio(editing.inicio ? editing.inicio.split("T")[0] : "");
       setLocal(editing.local || "");
     } else {
       setName("");
@@ -59,7 +60,8 @@ export default function ServerForm({ editing, onSaved }) {
         name: name.trim(),
         photo,
         funcao: funcao.trim(),
-        inicio: inicio || null,
+        // 👇 garante que sempre salva o mesmo dia escolhido
+        inicio: inicio ? new Date(inicio + "T00:00:00").toISOString().split("T")[0] : null,
         local: local.trim(),
       };
 

@@ -81,9 +81,15 @@ export default function ServerList({ onEdit, refreshTrigger }) {
                 <td>{s.inicio ? new Date(s.inicio).toLocaleDateString('pt-BR') : "-"}</td>
                 <td>{s.local || "-"}</td>
                 <td className="actions">
-                  <button onClick={() => setSelected(s)} className="btn small info">👀</button>
-                  <button onClick={() => onEdit && onEdit(s)} className="btn small">✏️</button>
-                  <button onClick={() => handleDelete(s._id)} className="btn small danger">🗑️</button>
+                  <button onClick={() => setSelected(s)} className="btn small info" title="Visualizar">
+                    🔎
+                  </button>
+                  <button onClick={() => onEdit && onEdit(s)} className="btn small" title="Editar">
+                    ✨
+                  </button>
+                  <button onClick={() => handleDelete(s._id)} className="btn small danger" title="Excluir">
+                    ❌
+                  </button>
                 </td>
               </tr>
             ))}
