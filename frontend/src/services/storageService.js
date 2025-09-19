@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = 'servidores_altar';
+const STORAGE_KEY = 'usuarios_altar';
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-async function apiRequest(path='', options={}) {
+async function apiRequest(path = '', options = {}) {
   if (!API_BASE) throw new Error('NO_API');
-  const res = await fetch(API_BASE.replace(/\/$/,'') + path, options);
+  const res = await fetch(API_BASE.replace(/\/$/, '') + path, options);
   if (!res.ok) {
     const txt = await res.text();
     throw new Error(txt || 'API error');
@@ -14,22 +14,20 @@ async function apiRequest(path='', options={}) {
 }
 
 export const storageService = {
-  // Salvar todos os servidores (fallback localStorage)
-  async saveServers(servers) {
+  // Salvar todos (fallback localStorage)
+  async saveUsers(users) {
     if (API_BASE) {
-      // send all to server: replace by deleting all and re-creating could be heavy.
-      // we'll just return servers (client should call create/update/delete individually).
-      return servers;
+      return users;
     } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
     }
   },
 
-  // Carregar todos os servidores
-  async loadServers() {
+  // Carregar todos os usuários
+  async loadUsers() {
     if (API_BASE) {
       try {
-        return await apiRequest('/api/servidores');
+        return await apiRequest('/api/user/users');
       } catch (err) {
         console.warn('API unavailable, falling back to localStorage:', err.message);
         const data = localStorage.getItem(STORAGE_KEY);
@@ -41,61 +39,65 @@ export const storageService = {
     }
   },
 
-  async createServer(s) {
+  // Criar usuário
+  async createUser(u) {
     if (API_BASE) {
-      return await apiRequest('/api/servidores', {
+      return await apiRequest('/api/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(s),
+        body: JSON.stringify(u),
       });
     } else {
-      const servers = this.loadServers();
+      const users = this.loadUsers();
       const id = uuidv4();
-      const newS = { id, ...s };
-      const list = await Promise.resolve(servers).then(arr => { arr.unshift(newS); localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); return arr; });
-      return newS;
+      const newU = { id, ...u };
+      const list = await Promise.resolve(users).then(arr => {
+        arr.unshift(newU);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+        return arr;
+      });
+      return newU;
     }
   },
 
-  async updateServer(id, s) {
+  async updateUser(id, u) {
     if (API_BASE) {
-      return await apiRequest(`/api/servidores/${id}`, {
+      return await apiRequest(`/api/user/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(s),
+        body: JSON.stringify(u),
       });
     } else {
-      const servers = await this.loadServers();
-      const idx = servers.findIndex(x => x.id === id);
+      const users = await this.loadUsers();
+      const idx = users.findIndex(x => x.id === id);
       if (idx !== -1) {
-        servers[idx] = { ...servers[idx], ...s };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(servers));
-        return servers[idx];
+        users[idx] = { ...users[idx], ...u };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+        return users[idx];
       }
       throw new Error('Not found');
     }
   },
 
-  async deleteServer(id) {
+  async deleteUser(id) {
     if (API_BASE) {
-      return await apiRequest(`/api/servidores/${id}`, { method: 'DELETE' });
+      return await apiRequest(`/api/user/${id}`, { method: 'DELETE' });
     } else {
-      const servers = await this.loadServers();
-      const filtered = servers.filter(s => s.id !== id);
+      const users = await this.loadUsers();
+      const filtered = users.filter(u => u.id !== id);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
       return { message: 'deleted' };
     }
   },
 
-  // Search (client-side filtering)
-  async searchServers(filters = {}) {
-    const servers = await this.loadServers();
-    let result = servers;
-    if (filters.nome) {
-      result = result.filter(s => (s.nome || '').toLowerCase().includes(filters.nome.toLowerCase()));
+  async searchUsers(filters = {}) {
+    const users = await this.loadUsers();
+    let result = users;
+    if (filters.name) {
+      result = result.filter(u => (u.name || '').toLowerCase().includes(filters.name.toLowerCase()));
     }
-    if (filters.funcao) {
-      result = result.filter(s => (s.funcao || '').toLowerCase().includes(filters.funcao.toLowerCase()));
+    if (filters.email) {
+      result = result.filter(u => (u.email || '').toLowerCase().includes(filters.email.toLowerCase()));
     }
     return result;
   }
