@@ -1,26 +1,22 @@
-// frontend/src/services/uploadService.js
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const CLOUDINARY_URL =
+  import.meta.env.VITE_CLOUDINARY_URL || process.env.REACT_APP_CLOUDINARY_URL;
+const UPLOAD_PRESET =
+  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
 
 export const uploadService = {
   async uploadImage(file) {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
 
-    try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: "POST",
-        body: formData,
-      });
+    const res = await fetch(CLOUDINARY_URL, {
+      method: "POST",
+      body: formData,
+    });
 
-      if (!response.ok) {
-        throw new Error("Falha no upload");
-      }
+    if (!res.ok) throw new Error("Falha no upload");
 
-      const data = await response.json();
-      return data.url;
-    } catch (err) {
-      console.error("Erro no upload:", err);
-      throw err;
-    }
+    const data = await res.json();
+    return data.secure_url; // <- link da imagem já hospedada
   },
 };

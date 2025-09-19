@@ -89,7 +89,13 @@ async function handleSubmit(e) {
       </label>
 
       <label>Função
-        <input required value={funcao} onChange={e => setFuncao(e.target.value)} placeholder="Ex: Coroinha, Leitor..." />
+        <select value={funcao} onChange={e => setFuncao(e.target.value)}>
+          <option value="">Selecione a função</option>
+          <option value="Acólito">Acólito</option>
+          <option value="Leitor">Leitor</option>
+          <option value="Ministro">Ministro</option>
+          <option value="Coroinha">Coroinha</option>
+        </select> setFuncao(e.target.value)} placeholder="Ex: Coroinha, Leitor..." />
       </label>
 
       <label>Início
