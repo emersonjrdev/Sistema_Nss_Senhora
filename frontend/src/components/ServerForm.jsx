@@ -14,7 +14,7 @@ export default function ServerForm({ editing, onSaved }) {
     if (editing) {
       setName(editing.name || "");
       setFuncao(editing.funcao || "");
-      setInicio(editing.inicio ? editing.inicio.split("T")[0] : "");
+      setInicio(editing.inicio || "");
       setLocal(editing.local || "");
     } else {
       setName("");
@@ -55,11 +55,11 @@ export default function ServerForm({ editing, onSaved }) {
 
       if (editing?._id) {
         await storageService.updateUser(editing._id, userData);
+        alert("Atualizado com sucesso!");
       } else {
         await storageService.createUser(userData);
+        alert("Usuário cadastrado!");
       }
-
-      alert(editing ? "Atualizado com sucesso!" : "Usuário cadastrado!");
 
       setName("");
       setFuncao("");
