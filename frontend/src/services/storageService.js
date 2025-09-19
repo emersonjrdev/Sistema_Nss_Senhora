@@ -5,13 +5,23 @@ const API_BASE = import.meta.env.VITE_API_URL || "";
 
 async function apiRequest(path = "", options = {}) {
   if (!API_BASE) throw new Error("NO_API");
-  const res = await fetch(API_BASE.replace(/\/$/, "") + path, options);
+
+  const url = API_BASE.replace(/\/$/, "") + path;
+  console.log("🌍 Chamando API:", url, options); // 👈 log da requisição
+
+  const res = await fetch(url, options);
+
   if (!res.ok) {
     const txt = await res.text();
+    console.error("❌ Erro da API:", res.status, txt);
     throw new Error(txt || "API error");
   }
-  return res.json();
+
+  const data = await res.json();
+  console.log("✅ Resposta API:", data); // 👈 log da resposta
+  return data;
 }
+
 
 export const storageService = {
   // Salvar todos (fallback localStorage)
