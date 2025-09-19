@@ -10,6 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/src/assets/favicon.ico">
   </head>
+  <script>
+  console.log("🔥 index.html inline: frontend entregue pelo Vercel");
+  // também cria um texto visível na página para garantir execução
+  const el = document.createElement('div');
+  el.id = 'debug-frontend-inline';
+  el.style.position = 'fixed';
+  el.style.right = '8px';
+  el.style.bottom = '8px';
+  el.style.padding = '6px 10px';
+  el.style.background = '#0b80ff';
+  el.style.color = 'white';
+  el.style.zIndex = 99999;
+  el.textContent = 'DEBUG: inline script executou';
+  document.body.appendChild(el);
+</script>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
