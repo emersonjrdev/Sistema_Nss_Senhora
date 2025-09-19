@@ -15,7 +15,10 @@ export default function ServerForm({ editing, onSaved }) {
     console.log("🔥 Variáveis no build:", import.meta.env);
     console.log("🌍 API_BASE:", import.meta.env.VITE_API_URL);
     console.log("☁️ CLOUDINARY_URL:", import.meta.env.VITE_CLOUDINARY_URL);
-    console.log("☁️ CLOUDINARY_PRESET:", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    console.log(
+      "☁️ CLOUDINARY_PRESET:",
+      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+    );
   }, []);
 
   useEffect(() => {
@@ -61,7 +64,9 @@ export default function ServerForm({ editing, onSaved }) {
         photo,
         funcao: funcao.trim(),
         // 👇 garante que sempre salva o mesmo dia escolhido
-        inicio: inicio ? new Date(inicio + "T00:00:00").toISOString().split("T")[0] : null,
+        inicio: inicio
+          ? new Date(inicio + "T00:00:00").toISOString().split("T")[0]
+          : null,
         local: local.trim(),
       };
 
@@ -111,8 +116,8 @@ export default function ServerForm({ editing, onSaved }) {
         >
           <option value="">Selecione a função</option>
           <option value="Acólito">Acólito</option>
-          <option value="Leitor">Filhas de Maria</option>
-          <option value="Ministro">Cerimoniário</option>
+          <option value="Filhas de Maria">Filhas de Maria</option>
+          <option value="Cerimoniário">Cerimoniário</option>
           <option value="Coroinha">Coroinha</option>
         </select>
       </label>
