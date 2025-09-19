@@ -3,6 +3,8 @@ import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
 
 export default function ServerForm({ editing, onSaved }) {
+  console.log("🟢 ServerForm montado"); // Log ao renderizar componente
+
   const [name, setName] = useState("");
   const [funcao, setFuncao] = useState("");
   const [inicio, setInicio] = useState("");
@@ -11,6 +13,7 @@ export default function ServerForm({ editing, onSaved }) {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    console.log("🔄 useEffect disparado, editing:", editing);
     if (editing) {
       setName(editing.name || "");
       setFuncao(editing.funcao || "");
@@ -26,6 +29,7 @@ export default function ServerForm({ editing, onSaved }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    console.log("🟡 handleSubmit disparado");
 
     if (!name.trim()) {
       alert("Nome é obrigatório");
@@ -36,19 +40,17 @@ export default function ServerForm({ editing, onSaved }) {
       setUploading(true);
       let photo = editing?.photo || null;
 
-      // 📤 Upload da imagem no Cloudinary
       if (file) {
+        console.log("📤 Subindo arquivo para Cloudinary:", file.name);
         if (file.size > 5 * 1024 * 1024) {
           alert("A imagem deve ter menos de 5MB");
           setUploading(false);
           return;
         }
-        console.log("📤 Fazendo upload da imagem...");
         photo = await uploadService.uploadImage(file);
         console.log("✅ Upload concluído:", photo);
       }
 
-      // 📌 Dados que vão para o backend
       const userData = {
         name: name.trim(),
         photo,
@@ -56,18 +58,18 @@ export default function ServerForm({ editing, onSaved }) {
         inicio: inicio || null,
         local: local.trim(),
       };
-
-      console.log("📨 Enviando dados para API:", userData);
+      console.log("📦 Dados prontos para envio:", userData);
 
       if (editing?._id) {
+        console.log("✏️ Atualizando usuário ID:", editing._id);
         await storageService.updateUser(editing._id, userData);
         alert("Atualizado com sucesso!");
       } else {
+        console.log("➕ Criando novo usuário");
         await storageService.createUser(userData);
         alert("Usuário cadastrado!");
       }
 
-      // 🔄 Reset do formulário
       setName("");
       setFuncao("");
       setInicio("");
@@ -77,14 +79,18 @@ export default function ServerForm({ editing, onSaved }) {
 
       if (onSaved) onSaved();
     } catch (err) {
-      console.error("❌ Erro ao salvar:", err);
+      console.error("❌ Erro detalhado:", err);
       alert("Erro ao salvar: " + err.message);
       setUploading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="form">
+    <form
+      onSubmit={handleSubmit}
+      className="form"
+      onClick={() => console.log("🖱 Clique detectado no form")}
+    >
       <label>
         Nome
         <input
@@ -136,18 +142,27 @@ export default function ServerForm({ editing, onSaved }) {
           type="file"
           name="foto"
           accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
+          onChange={(e) => {
+            console.log("📂 Arquivo selecionado:", e.target.files[0]);
+            setFile(e.target.files[0]);
+          }}
         />
       </label>
 
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button type="submit" className="btn" disabled={uploading}>
+        <button
+          type="submit"
+          className="btn"
+          disabled={uploading}
+          onClick={() => console.log("🖱 Cliquei em Salvar/Atualizar")}
+        >
           {uploading ? "Enviando..." : editing ? "Atualizar" : "Salvar"}
         </button>
         <button
           type="button"
           className="btn secondary"
           onClick={() => {
+            console.log("🧹 Limpar formulário");
             setName("");
             setFuncao("");
             setInicio("");
