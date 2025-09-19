@@ -18,6 +18,21 @@ app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/servidores', servidoresRoutes);
 
+app.get("/api/test-insert", async (req, res) => {
+  try {
+    const User = mongoose.model("User");
+    const doc = await User.create({
+      name: "Teste",
+      email: `teste${Date.now()}@mail.com`
+    });
+    res.json(doc);
+  } catch (err) {
+    console.error("❌ Erro no insert:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // simple root
 app.get('/', (req, res) => res.send('API running'));
 
