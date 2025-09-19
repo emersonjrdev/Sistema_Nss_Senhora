@@ -36,15 +36,19 @@ export default function ServerForm({ editing, onSaved }) {
       setUploading(true);
       let photo = editing?.photo || null;
 
+      // 📤 Upload da imagem no Cloudinary
       if (file) {
         if (file.size > 5 * 1024 * 1024) {
           alert("A imagem deve ter menos de 5MB");
           setUploading(false);
           return;
         }
+        console.log("📤 Fazendo upload da imagem...");
         photo = await uploadService.uploadImage(file);
+        console.log("✅ Upload concluído:", photo);
       }
 
+      // 📌 Dados que vão para o backend
       const userData = {
         name: name.trim(),
         photo,
@@ -52,6 +56,8 @@ export default function ServerForm({ editing, onSaved }) {
         inicio: inicio || null,
         local: local.trim(),
       };
+
+      console.log("📨 Enviando dados para API:", userData);
 
       if (editing?._id) {
         await storageService.updateUser(editing._id, userData);
@@ -61,6 +67,7 @@ export default function ServerForm({ editing, onSaved }) {
         alert("Usuário cadastrado!");
       }
 
+      // 🔄 Reset do formulário
       setName("");
       setFuncao("");
       setInicio("");
@@ -70,7 +77,7 @@ export default function ServerForm({ editing, onSaved }) {
 
       if (onSaved) onSaved();
     } catch (err) {
-      console.error("Erro detalhado:", err);
+      console.error("❌ Erro ao salvar:", err);
       alert("Erro ao salvar: " + err.message);
       setUploading(false);
     }
