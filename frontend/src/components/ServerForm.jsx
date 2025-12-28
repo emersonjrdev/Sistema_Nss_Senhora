@@ -2,45 +2,70 @@ import React, { useEffect, useState } from "react";
 import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
 
-export default function ServerForm({ editing, onSaved }) {
+export default function ServerForm({ editing, onSaved, toast }) {
   const [name, setName] = useState("");
   const [funcao, setFuncao] = useState("");
   const [inicio, setInicio] = useState("");
   const [local, setLocal] = useState("");
   const [file, setFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
-
-  // 👇 loga variáveis logo no carregamento
-  useEffect(() => {
-    console.log("🔥 Variáveis no build:", import.meta.env);
-    console.log("🌍 API_BASE:", import.meta.env.VITE_API_URL);
-    console.log("☁️ CLOUDINARY_URL:", import.meta.env.VITE_CLOUDINARY_URL);
-    console.log(
-      "☁️ CLOUDINARY_PRESET:",
-      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-    );
-  }, []);
 
   useEffect(() => {
     if (editing) {
       setName(editing.name || "");
       setFuncao(editing.funcao || "");
-      // 👇 força exibir apenas YYYY-MM-DD
       setInicio(editing.inicio ? editing.inicio.split("T")[0] : "");
       setLocal(editing.local || "");
+      setPhotoPreview(editing.photo || null);
+      setFile(null);
     } else {
       setName("");
       setFuncao("");
       setInicio("");
       setLocal("");
+      setFile(null);
+      setPhotoPreview(null);
     }
   }, [editing]);
+
+  function handleFileChange(e) {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      toast?.error("A imagem deve ter menos de 5MB");
+      return;
+    }
+
+    if (!selectedFile.type.startsWith("image/")) {
+      toast?.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    setFile(selectedFile);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result);
+    };
+    reader.readAsDataURL(selectedFile);
+  }
+
+  function handleClear() {
+    setName("");
+    setFuncao("");
+    setInicio("");
+    setLocal("");
+    setFile(null);
+    setPhotoPreview(null);
+    if (onSaved) onSaved();
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
 
     if (!name.trim()) {
-      alert("Nome é obrigatório");
+      toast?.error("Nome é obrigatório");
       return;
     }
 
@@ -49,48 +74,32 @@ export default function ServerForm({ editing, onSaved }) {
       let photo = editing?.photo || null;
 
       if (file) {
-        if (file.size > 5 * 1024 * 1024) {
-          alert("A imagem deve ter menos de 5MB");
-          setUploading(false);
-          return;
-        }
-        console.log("📤 Enviando arquivo para Cloudinary:", file.name);
         photo = await uploadService.uploadImage(file);
-        console.log("✅ Foto recebida do Cloudinary:", photo);
       }
 
       const userData = {
         name: name.trim(),
         photo,
-        funcao: funcao.trim(),
-        // 👇 garante que sempre salva o mesmo dia escolhido
+        funcao: funcao.trim() || null,
         inicio: inicio
           ? new Date(inicio + "T00:00:00").toISOString().split("T")[0]
           : null,
-        local: local.trim(),
+        local: local.trim() || null,
       };
-
-      console.log("📦 Dados sendo enviados:", userData);
 
       if (editing?._id) {
         await storageService.updateUser(editing._id, userData);
-        alert("Atualizado com sucesso!");
+        toast?.success("Servidor atualizado com sucesso!");
       } else {
         await storageService.createUser(userData);
-        alert("Usuário cadastrado!");
+        toast?.success("Servidor cadastrado com sucesso!");
       }
 
-      setName("");
-      setFuncao("");
-      setInicio("");
-      setLocal("");
-      setFile(null);
+      handleClear();
       setUploading(false);
-
-      if (onSaved) onSaved();
     } catch (err) {
-      console.error("❌ Erro detalhado:", err);
-      alert("Erro ao salvar: " + err.message);
+      console.error("Erro ao salvar:", err);
+      toast?.error("Erro ao salvar: " + (err.message || "Tente novamente"));
       setUploading(false);
     }
   }
@@ -144,32 +153,70 @@ export default function ServerForm({ editing, onSaved }) {
 
       <label>
         Foto (opcional)
-        <input
-          type="file"
-          name="foto"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
+        <div className="file-input-wrapper">
+          <input
+            type="file"
+            name="foto"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="file-input"
+            id="photo-upload"
+          />
+          <label htmlFor="photo-upload" className="file-input-label">
+            {photoPreview ? "Alterar foto" : "Selecionar foto"}
+          </label>
+        </div>
+        {photoPreview && (
+          <div className="photo-preview">
+            <img src={photoPreview} alt="Preview" />
+            <button
+              type="button"
+              className="btn-remove-photo"
+              onClick={() => {
+                setFile(null);
+                setPhotoPreview(editing?.photo || null);
+              }}
+              aria-label="Remover foto"
+            >
+              ×
+            </button>
+          </div>
+        )}
       </label>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+      <div className="form-actions">
         <button type="submit" className="btn" disabled={uploading}>
-          {uploading ? "Enviando..." : editing ? "Atualizar" : "Salvar"}
+          {uploading ? (
+            <>
+              <span className="spinner"></span>
+              Enviando...
+            </>
+          ) : editing ? (
+            "Atualizar"
+          ) : (
+            "Salvar"
+          )}
         </button>
-        <button
-          type="button"
-          className="btn secondary"
-          onClick={() => {
-            setName("");
-            setFuncao("");
-            setInicio("");
-            setLocal("");
-            setFile(null);
-            if (onSaved) onSaved();
-          }}
-        >
-          Limpar
-        </button>
+        {editing && (
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={handleClear}
+            disabled={uploading}
+          >
+            Cancelar
+          </button>
+        )}
+        {!editing && (
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={handleClear}
+            disabled={uploading}
+          >
+            Limpar
+          </button>
+        )}
       </div>
     </form>
   );
