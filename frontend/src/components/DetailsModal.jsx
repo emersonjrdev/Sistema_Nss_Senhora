@@ -1,5 +1,11 @@
 import React from "react";
 
+function getAvatarFallback(name) {
+  const parts = (name || "").split(" ").filter(Boolean);
+  if (!parts.length) return "SA";
+  return ((parts[0]?.[0] || "") + (parts[1]?.[0] || parts[0]?.[1] || "")).toUpperCase();
+}
+
 export default function DetailsModal({ server, onClose }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -17,14 +23,16 @@ export default function DetailsModal({ server, onClose }) {
         
         <h3>Detalhes do Servidor</h3>
         
-        {server.photo && (
-          <div className="modal-photo">
+        <div className="modal-photo">
+          {server.photo ? (
             <img 
               src={server.photo} 
               alt={server.name} 
             />
-          </div>
-        )}
+          ) : (
+            <div className="avatar-fallback modal-avatar">{getAvatarFallback(server.name)}</div>
+          )}
+        </div>
         
         <div className="modal-content">
           <div className="detail-item">
@@ -40,8 +48,28 @@ export default function DetailsModal({ server, onClose }) {
             <span>{server.inicio ? new Date(server.inicio).toLocaleDateString('pt-BR') : "-"}</span>
           </div>
           <div className="detail-item">
+            <strong>Nascimento:</strong>
+            <span>{server.nascimento ? new Date(server.nascimento).toLocaleDateString('pt-BR') : "-"}</span>
+          </div>
+          <div className="detail-item">
+            <strong>Telefone:</strong>
+            <span>{server.telefone || "-"}</span>
+          </div>
+          <div className="detail-item">
+            <strong>Status:</strong>
+            <span>{server.status || "Ativo"}</span>
+          </div>
+          <div className="detail-item">
             <strong>Local:</strong>
-            <span>{server.local || "-"}</span>
+            <span>{server.local || server.comunidade || "-"}</span>
+          </div>
+          <div className="detail-item">
+            <strong>Comunidade:</strong>
+            <span>{server.comunidade || "-"}</span>
+          </div>
+          <div className="detail-item">
+            <strong>Observações:</strong>
+            <span>{server.observacoes || "-"}</span>
           </div>
         </div>
         

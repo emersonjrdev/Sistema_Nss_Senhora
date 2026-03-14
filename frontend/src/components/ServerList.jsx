@@ -1,23 +1,37 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { storageService } from "../services/storageService";
 import DetailsModal from "./DetailsModal";
-import ConfirmModal from "./ConfirmModal";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import SearchFilters from "./SearchFilters";
+import StatusBadge from "./StatusBadge";
+import EmptyState from "./EmptyState";
+
+const ITEMS_PER_PAGE = 6;
+
+function getAvatarFallback(name) {
+  const first = (name || "").split(" ").filter(Boolean);
+  if (!first.length) return "SA";
+  return ((first[0]?.[0] || "") + (first[1]?.[0] || first[0]?.[1] || "")).toUpperCase();
+}
 
 export default function ServerList({ onEdit, refreshTrigger, toast }) {
   const [servidores, setServidores] = useState([]);
-  const [filtroNome, setFiltroNome] = useState("");
-  const [filtroFuncao, setFiltroFuncao] = useState("");
+  const [filters, setFilters] = useState({
+    name: "",
+    funcao: "",
+    local: "",
+    status: "",
+    period: "",
+  });
   const [selected, setSelected] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadServers = useCallback(async () => {
     try {
       setLoading(true);
-      const servers = await storageService.searchUsers({
-        name: filtroNome,
-        funcao: filtroFuncao
-      });
+      const servers = await storageService.searchUsers(filters);
       setServidores(servers);
     } catch (err) {
       console.error("Erro ao carregar servidores:", err);
@@ -25,9 +39,8 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
     } finally {
       setLoading(false);
     }
-  }, [filtroNome, filtroFuncao, toast]);
+  }, [filters, toast]);
 
-  // Debounce para busca
   useEffect(() => {
     const timer = setTimeout(() => {
       loadServers();
@@ -35,6 +48,16 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
 
     return () => clearTimeout(timer);
   }, [refreshTrigger, loadServers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const totalPages = Math.max(1, Math.ceil(servidores.length / ITEMS_PER_PAGE));
+  const paginatedServers = servidores.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   function handleDeleteClick(id, name) {
     setDeletingId({ id, name });
@@ -55,22 +78,23 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
     }
   }
 
+  function handleFilterChange(field, value) {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function clearFilters() {
+    setFilters({
+      name: "",
+      funcao: "",
+      local: "",
+      status: "",
+      period: "",
+    });
+  }
+
   return (
-    <div>
-      <div className="filters">
-        <input 
-          placeholder="Pesquisar por nome" 
-          value={filtroNome} 
-          onChange={e => setFiltroNome(e.target.value)}
-          aria-label="Pesquisar por nome"
-        />
-        <input 
-          placeholder="Pesquisar por função" 
-          value={filtroFuncao} 
-          onChange={e => setFiltroFuncao(e.target.value)}
-          aria-label="Pesquisar por função"
-        />
-      </div>
+    <div className="server-list-root">
+      <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
 
       <div className="table-container">
         {loading ? (
@@ -78,6 +102,8 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
             <div className="spinner"></div>
             <p>Carregando servidores...</p>
           </div>
+        ) : servidores.length === 0 ? (
+          <EmptyState />
         ) : (
           <table className="table">
             <thead>
@@ -85,42 +111,34 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                 <th>Foto</th>
                 <th>Nome</th>
                 <th>Função</th>
+                <th>Status</th>
                 <th>Início</th>
                 <th>Local</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {servidores.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="empty-state">
-                    <div>Nenhum servidor encontrado</div>
-                    <small>Cadastre o primeiro servidor no formulário ao lado</small>
-                  </td>
-                </tr>
-              )}
-              {servidores.map(s => (
+              {paginatedServers.map((s) => (
                 <tr key={s._id || s.id} className="server-row">
                   <td>
-                    {s.photo ? 
-                      <img src={s.photo} alt={s.name} className="thumb" /> : 
+                    {s.photo ? (
+                      <img src={s.photo} alt={s.name} className="thumb" />
+                    ) : (
                       <div className="thumb-placeholder" aria-label="Sem foto">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        {getAvatarFallback(s.name)}
                       </div>
-                    }
+                    )}
                   </td>
                   <td className="nome-cell">{s.name}</td>
                   <td><span className="funcao-badge">{s.funcao || "-"}</span></td>
+                  <td><StatusBadge status={s.status} /></td>
                   <td>{s.inicio ? new Date(s.inicio).toLocaleDateString('pt-BR') : "-"}</td>
-                  <td>{s.local || "-"}</td>
+                  <td>{s.local || s.comunidade || "-"}</td>
                   <td className="actions">
                     <button 
                       onClick={() => setSelected(s)} 
                       className="btn small info" 
-                      title="Visualizar detalhes"
+                      title="Visualizar detalhes do servidor"
                       aria-label="Visualizar detalhes"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -131,7 +149,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                     <button 
                       onClick={() => onEdit && onEdit(s)} 
                       className="btn small" 
-                      title="Editar servidor"
+                      title="Editar cadastro do servidor"
                       aria-label="Editar servidor"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -158,15 +176,35 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
         )}
       </div>
 
+      {!loading && servidores.length > ITEMS_PER_PAGE && (
+        <div className="table-pagination">
+          <button
+            className="btn secondary small"
+            type="button"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            Anterior
+          </button>
+          <span>
+            Pagina {currentPage} de {totalPages}
+          </span>
+          <button
+            className="btn secondary small"
+            type="button"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Proxima
+          </button>
+        </div>
+      )}
+
       {selected && <DetailsModal server={selected} onClose={() => setSelected(null)} />}
       
       {deletingId && (
-        <ConfirmModal
-          title="Confirmar exclusão"
-          message={`Tem certeza que deseja remover o servidor "${deletingId.name}"? Esta ação não pode ser desfeita.`}
-          confirmText="Excluir"
-          cancelText="Cancelar"
-          type="danger"
+        <ConfirmDeleteModal
+          serverName={deletingId.name}
           onConfirm={confirmDelete}
           onCancel={() => setDeletingId(null)}
         />

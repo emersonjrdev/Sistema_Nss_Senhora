@@ -2,26 +2,27 @@ import React, { useState, useEffect } from "react";
 import ServerList from "./components/ServerList";
 import ServerForm from "./components/ServerForm";
 import ToastContainer from "./components/ToastContainer";
+import HeaderInstitucional from "./components/HeaderInstitucional";
+import DashboardCards from "./components/DashboardCards";
 import { storageService } from "./services/storageService";
 import { useToast } from "./hooks/useToast";
-import LogoParoquia from "./assets/logo-paroquia.jpeg";
 
 export default function App() {
   const [editing, setEditing] = useState(null);
   const [refreshList, setRefreshList] = useState(0);
-  const [totalServidores, setTotalServidores] = useState(0);
+  const [servidores, setServidores] = useState([]);
   const toast = useToast();
 
   useEffect(() => {
-    const loadTotal = async () => {
+    const loadData = async () => {
       try {
         const users = await storageService.loadUsers();
-        setTotalServidores(users.length);
+        setServidores(users);
       } catch (err) {
-        console.error("Erro ao carregar total:", err);
+        console.error("Erro ao carregar dados:", err);
       }
     };
-    loadTotal();
+    loadData();
   }, [refreshList]);
 
   const handleSaved = () => {
@@ -32,35 +33,42 @@ export default function App() {
   return (
     <div className="container">
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
-      
-      <header className="app-header">
-        <div className="header-content">
-          <div className="logo-container">
-            <img
-              src={LogoParoquia}
-              alt="Logo Paróquia Nossa Senhora das Graças"
-              className="logo"
-            />
-          </div>
-          <div className="header-text">
-            <h1>Servidores do Altar</h1>
-            <p>Paróquia Nossa Senhora das Graças</p>
-            <p className="subtitle">Sistema para cadastrar e gerenciar servidores</p>
-          </div>
-        </div>
-      </header>
+
+      <HeaderInstitucional />
+      <DashboardCards servidores={servidores} />
 
       <main>
+        <section className="future-modules-card">
+          <h2>Visão de evolução da plataforma</h2>
+          <p>
+            Estrutura preparada para módulos de escala, presença, eventos, relatórios,
+            aniversariantes e histórico pastoral dos servidores.
+          </p>
+          <div className="module-tags">
+            <span>Escalas de serviço</span>
+            <span>Controle de presença</span>
+            <span>Eventos e missas</span>
+            <span>Relatórios</span>
+            <span>Aniversariantes</span>
+            <span>Comunidades</span>
+          </div>
+        </section>
+
         <div className="grid">
           <div className="card form-card">
-            <h3>{editing ? "Editar Servidor" : "Cadastrar Servidor"}</h3>
+            <div className="card-title-group">
+              <h3>{editing ? "Editar Servidor" : "Cadastrar Servidor"}</h3>
+              <p>
+                Cadastre com dados completos para uma gestão paroquial organizada e segura.
+              </p>
+            </div>
             <ServerForm editing={editing} onSaved={handleSaved} toast={toast} />
           </div>
 
           <div className="card list-card">
             <div className="card-header">
               <h3>Lista de Servidores</h3>
-              <span className="badge">{totalServidores} servidores</span>
+              <span className="badge">{servidores.length} servidores</span>
             </div>
             <ServerList 
               onEdit={(srv) => setEditing(srv)} 

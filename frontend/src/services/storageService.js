@@ -51,12 +51,21 @@ export const storageService = {
       return await apiRequest("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(u),
+        body: JSON.stringify({
+          ...u,
+          createdAt: u.createdAt || new Date().toISOString(),
+          status: u.status || "Ativo",
+        }),
       });
     } else {
       const users = await this.loadUsers();
       const id = uuidv4();
-      const newU = { id, ...u };
+      const newU = {
+        id,
+        createdAt: u.createdAt || new Date().toISOString(),
+        status: u.status || "Ativo",
+        ...u,
+      };
       users.unshift(newU);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
       return newU;
@@ -95,7 +104,7 @@ export const storageService = {
     }
   },
 
-  // Buscar usuários (nome + função)
+  // Buscar usuários (nome, funcao, local, status e periodo)
   async searchUsers(filters = {}) {
     const users = await this.loadUsers();
     let result = users;
@@ -110,6 +119,29 @@ export const storageService = {
       result = result.filter((u) =>
         (u.funcao || "").toLowerCase().includes(filters.funcao.toLowerCase())
       );
+    }
+
+    if (filters.local) {
+      result = result.filter((u) =>
+        `${u.local || ""} ${u.comunidade || ""}`
+          .toLowerCase()
+          .includes(filters.local.toLowerCase())
+      );
+    }
+
+    if (filters.status) {
+      result = result.filter(
+        (u) => (u.status || "Ativo").toLowerCase() === filters.status.toLowerCase()
+      );
+    }
+
+    if (filters.period) {
+      result = result.filter((u) => {
+        if (!u.inicio) return false;
+        const dt = new Date(u.inicio);
+        const month = String(dt.getMonth() + 1).padStart(2, "0");
+        return `${dt.getFullYear()}-${month}` === filters.period;
+      });
     }
 
     return result;

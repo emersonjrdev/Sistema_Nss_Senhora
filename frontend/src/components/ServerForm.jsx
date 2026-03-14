@@ -2,32 +2,72 @@ import React, { useEffect, useState } from "react";
 import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
 
+const DEFAULT_STATUS = "Ativo";
+
+function getInitials(name) {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "SA";
+  const parts = trimmed.split(" ").filter(Boolean);
+  return (parts[0]?.[0] || "") + (parts[1]?.[0] || parts[0]?.[1] || "");
+}
+
 export default function ServerForm({ editing, onSaved, toast }) {
-  const [name, setName] = useState("");
-  const [funcao, setFuncao] = useState("");
-  const [inicio, setInicio] = useState("");
-  const [local, setLocal] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    funcao: "",
+    inicio: "",
+    local: "",
+    telefone: "",
+    nascimento: "",
+    comunidade: "",
+    status: DEFAULT_STATUS,
+    observacoes: "",
+  });
+  const [errors, setErrors] = useState({});
   const [file, setFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (editing) {
-      setName(editing.name || "");
-      setFuncao(editing.funcao || "");
-      setInicio(editing.inicio ? editing.inicio.split("T")[0] : "");
-      setLocal(editing.local || "");
+      setFormData({
+        name: editing.name || "",
+        funcao: editing.funcao || "",
+        inicio: editing.inicio ? editing.inicio.split("T")[0] : "",
+        local: editing.local || "",
+        telefone: editing.telefone || "",
+        nascimento: editing.nascimento ? editing.nascimento.split("T")[0] : "",
+        comunidade: editing.comunidade || "",
+        status: editing.status || DEFAULT_STATUS,
+        observacoes: editing.observacoes || "",
+      });
       setPhotoPreview(editing.photo || null);
       setFile(null);
+      setErrors({});
     } else {
-      setName("");
-      setFuncao("");
-      setInicio("");
-      setLocal("");
+      setFormData({
+        name: "",
+        funcao: "",
+        inicio: "",
+        local: "",
+        telefone: "",
+        nascimento: "",
+        comunidade: "",
+        status: DEFAULT_STATUS,
+        observacoes: "",
+      });
       setFile(null);
       setPhotoPreview(null);
+      setErrors({});
     }
   }, [editing]);
+
+  function updateField(field, value) {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  }
 
   function handleFileChange(e) {
     const selectedFile = e.target.files?.[0];
@@ -52,20 +92,47 @@ export default function ServerForm({ editing, onSaved, toast }) {
   }
 
   function handleClear() {
-    setName("");
-    setFuncao("");
-    setInicio("");
-    setLocal("");
+    setFormData({
+      name: "",
+      funcao: "",
+      inicio: "",
+      local: "",
+      telefone: "",
+      nascimento: "",
+      comunidade: "",
+      status: DEFAULT_STATUS,
+      observacoes: "",
+    });
     setFile(null);
     setPhotoPreview(null);
+    setErrors({});
     if (onSaved) onSaved();
+  }
+
+  function validate() {
+    const nextErrors = {};
+    if (!formData.name.trim()) {
+      nextErrors.name = "Nome é obrigatório";
+    }
+    if (formData.telefone && !/^[\d()\s+\-]{8,20}$/.test(formData.telefone)) {
+      nextErrors.telefone = "Telefone inválido";
+    }
+    if (
+      formData.nascimento &&
+      formData.inicio &&
+      new Date(formData.nascimento) > new Date(formData.inicio)
+    ) {
+      nextErrors.inicio = "Data de início não pode ser antes do nascimento";
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!name.trim()) {
-      toast?.error("Nome é obrigatório");
+    if (!validate()) {
+      toast?.error("Corrija os campos destacados para continuar");
       return;
     }
 
@@ -78,13 +145,21 @@ export default function ServerForm({ editing, onSaved, toast }) {
       }
 
       const userData = {
-        name: name.trim(),
+        name: formData.name.trim(),
         photo,
-        funcao: funcao.trim() || null,
-        inicio: inicio
-          ? new Date(inicio + "T00:00:00").toISOString().split("T")[0]
+        funcao: formData.funcao.trim() || null,
+        inicio: formData.inicio
+          ? new Date(formData.inicio + "T00:00:00").toISOString().split("T")[0]
           : null,
-        local: local.trim() || null,
+        local: formData.local.trim() || null,
+        telefone: formData.telefone.trim() || null,
+        nascimento: formData.nascimento
+          ? new Date(formData.nascimento + "T00:00:00").toISOString().split("T")[0]
+          : null,
+        comunidade: formData.comunidade.trim() || null,
+        status: formData.status || DEFAULT_STATUS,
+        observacoes: formData.observacoes.trim() || null,
+        createdAt: editing?.createdAt || new Date().toISOString(),
       };
 
       if (editing?._id) {
@@ -106,95 +181,163 @@ export default function ServerForm({ editing, onSaved, toast }) {
 
   return (
     <form onSubmit={handleSubmit} className="form">
-      <label>
-        Nome
-        <input
-          required
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </label>
-
-      <label>
-        Função
-        <select
-          name="funcao"
-          value={funcao}
-          onChange={(e) => setFuncao(e.target.value)}
-        >
-          <option value="">Selecione a função</option>
-          <option value="Acólito">Acólito</option>
-          <option value="Filhas de Maria">Filhas de Maria</option>
-          <option value="Cerimoniário">Cerimoniário</option>
-          <option value="Coroinha">Coroinha</option>
-        </select>
-      </label>
-
-      <label>
-        Início
-        <input
-          type="date"
-          name="inicio"
-          value={inicio || ""}
-          onChange={(e) => setInicio(e.target.value)}
-        />
-      </label>
-
-      <label>
-        Local
-        <input
-          name="local"
-          value={local}
-          onChange={(e) => setLocal(e.target.value)}
-          placeholder="Paróquia, comunidade..."
-        />
-      </label>
-
-      <label>
-        Foto (opcional)
-        <div className="file-input-wrapper">
+      <div className="form-grid">
+        <label className={errors.name ? "field-error" : ""}>
+          Nome completo *
           <input
-            type="file"
-            name="foto"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="file-input"
-            id="photo-upload"
+            required
+            name="name"
+            value={formData.name}
+            onChange={(e) => updateField("name", e.target.value)}
+            placeholder="Ex: João Pedro da Silva"
           />
-          <label htmlFor="photo-upload" className="file-input-label">
-            {photoPreview ? "Alterar foto" : "Selecionar foto"}
-          </label>
-        </div>
-        {photoPreview && (
-          <div className="photo-preview">
-            <img src={photoPreview} alt="Preview" />
-            <button
-              type="button"
-              className="btn-remove-photo"
-              onClick={() => {
-                setFile(null);
-                setPhotoPreview(editing?.photo || null);
-              }}
-              aria-label="Remover foto"
-            >
-              ×
-            </button>
+          {errors.name && <small>{errors.name}</small>}
+        </label>
+
+        <label>
+          Função
+          <select
+            name="funcao"
+            value={formData.funcao}
+            onChange={(e) => updateField("funcao", e.target.value)}
+          >
+            <option value="">Selecione a função</option>
+            <option value="Acólito">Acólito</option>
+            <option value="Filhas de Maria">Filhas de Maria</option>
+            <option value="Cerimoniário">Cerimoniário</option>
+            <option value="Coroinha">Coroinha</option>
+          </select>
+        </label>
+
+        <label className={errors.telefone ? "field-error" : ""}>
+          Telefone
+          <input
+            name="telefone"
+            value={formData.telefone}
+            onChange={(e) => updateField("telefone", e.target.value)}
+            placeholder="(00) 00000-0000"
+          />
+          {errors.telefone && <small>{errors.telefone}</small>}
+        </label>
+
+        <label>
+          Status
+          <select
+            name="status"
+            value={formData.status}
+            onChange={(e) => updateField("status", e.target.value)}
+          >
+            <option value="Ativo">Ativo</option>
+            <option value="Em formação">Em formação</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </label>
+
+        <label>
+          Data de nascimento
+          <input
+            type="date"
+            name="nascimento"
+            value={formData.nascimento || ""}
+            onChange={(e) => updateField("nascimento", e.target.value)}
+          />
+        </label>
+
+        <label className={errors.inicio ? "field-error" : ""}>
+          Data de início no altar
+          <input
+            type="date"
+            name="inicio"
+            value={formData.inicio || ""}
+            onChange={(e) => updateField("inicio", e.target.value)}
+          />
+          {errors.inicio && <small>{errors.inicio}</small>}
+        </label>
+
+        <label>
+          Local de serviço
+          <input
+            name="local"
+            value={formData.local}
+            onChange={(e) => updateField("local", e.target.value)}
+            placeholder="Matriz, Capela..."
+          />
+        </label>
+
+        <label>
+          Comunidade/Paróquia
+          <input
+            name="comunidade"
+            value={formData.comunidade}
+            onChange={(e) => updateField("comunidade", e.target.value)}
+            placeholder="Ex: Comunidade São José"
+          />
+        </label>
+
+        <label className="full-width">
+          Observações
+          <textarea
+            name="observacoes"
+            value={formData.observacoes}
+            onChange={(e) => updateField("observacoes", e.target.value)}
+            placeholder="Informações importantes sobre disponibilidade, formação ou acompanhamento."
+          />
+        </label>
+      </div>
+
+      <label className="full-width">
+        Foto do servidor (opcional)
+        <div className="photo-upload-area">
+          <div className="photo-preview-card">
+            {photoPreview ? (
+              <img src={photoPreview} alt="Pré-visualização do servidor" />
+            ) : (
+              <div className="avatar-fallback">{getInitials(formData.name).toUpperCase()}</div>
+            )}
           </div>
-        )}
+          <div className="photo-upload-controls">
+            <div className="file-input-wrapper">
+              <input
+                type="file"
+                name="foto"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="file-input"
+                id="photo-upload"
+              />
+              <label htmlFor="photo-upload" className="file-input-label">
+                {photoPreview ? "Alterar foto" : "Selecionar foto"}
+              </label>
+            </div>
+            <p>Formatos aceitos: JPG, PNG ou WEBP com tamanho de ate 5MB.</p>
+            {photoPreview && (
+              <button
+                type="button"
+                className="btn-remove-link"
+                onClick={() => {
+                  setFile(null);
+                  setPhotoPreview(editing?.photo || null);
+                }}
+                aria-label="Remover foto selecionada"
+              >
+                Remover foto
+              </button>
+            )}
+          </div>
+        </div>
       </label>
 
       <div className="form-actions">
-        <button type="submit" className="btn" disabled={uploading}>
+        <button type="submit" className="btn btn-primary" disabled={uploading}>
           {uploading ? (
             <>
               <span className="spinner"></span>
-              Enviando...
+              Salvando...
             </>
           ) : editing ? (
-            "Atualizar"
+            "Atualizar servidor"
           ) : (
-            "Salvar"
+            "Cadastrar servidor"
           )}
         </button>
         {editing && (
