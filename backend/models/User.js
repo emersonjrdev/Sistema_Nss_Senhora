@@ -15,6 +15,12 @@ const UserSchema = new mongoose.Schema(
     funcao: { type: String },
     inicio: { type: Date },
     local: { type: String },
+    telefone: { type: String },
+    nascimento: { type: Date },
+    comunidade: { type: String },
+    status: { type: String, default: "Ativo" },
+    observacoes: { type: String },
+    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

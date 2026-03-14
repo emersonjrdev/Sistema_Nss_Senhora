@@ -7,8 +7,33 @@ const router = express.Router();
 // Criar usuário → POST /api/user
 router.post("/", async (req, res) => {
   try {
-    const { name, photo, funcao, inicio, local } = req.body;
-    const newUser = await User.create({ name, photo, funcao, inicio, local });
+    const {
+      name,
+      photo,
+      funcao,
+      inicio,
+      local,
+      telefone,
+      nascimento,
+      comunidade,
+      status,
+      observacoes,
+      createdAt,
+    } = req.body;
+
+    const newUser = await User.create({
+      name,
+      photo,
+      funcao,
+      inicio,
+      local,
+      telefone,
+      nascimento,
+      comunidade,
+      status,
+      observacoes,
+      createdAt,
+    });
     res.status(201).json(newUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -41,8 +66,9 @@ router.put("/:id", async (req, res) => {
     const updated = await User.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     );
+    if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
