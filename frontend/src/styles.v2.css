@@ -37,10 +37,21 @@ body {
   min-height: 100vh;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 .container {
   width: min(1320px, 96%);
   margin: 0 auto;
   padding: 24px 0 30px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .app-header {
@@ -202,6 +213,7 @@ body {
 
 .grid {
   display: grid;
+  grid-template-areas: "form list";
   grid-template-columns: minmax(330px, 420px) 1fr;
   gap: 16px;
   align-items: start;
@@ -216,8 +228,14 @@ body {
 }
 
 .form-card {
+  grid-area: form;
   position: sticky;
   top: 14px;
+}
+
+.list-card {
+  grid-area: list;
+  min-width: 0;
 }
 
 .card-title-group h3 {
@@ -457,6 +475,56 @@ body {
   gap: 10px;
 }
 
+.mobile-cards-list {
+  display: none;
+  gap: 10px;
+}
+
+.server-mobile-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.server-mobile-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.server-mobile-identification h4 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+  color: var(--primary-800);
+}
+
+.server-mobile-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.server-mobile-meta small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.server-mobile-meta span {
+  font-size: 13px;
+}
+
+.mobile-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
 .filters-panel {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -494,6 +562,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   background: #fff;
 }
 
@@ -794,7 +863,14 @@ body {
 }
 
 @media (max-width: 1160px) {
+  .container {
+    width: 95%;
+  }
+
   .grid {
+    grid-template-areas:
+      "form"
+      "list";
     grid-template-columns: 1fr;
   }
 
@@ -811,10 +887,43 @@ body {
   }
 }
 
+@media (max-width: 920px) {
+  .container {
+    width: 94%;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-content {
+    grid-template-columns: 90px 1fr;
+    padding: 20px;
+  }
+
+  .logo {
+    width: 82px;
+    height: 82px;
+  }
+
+  .table-container {
+    display: none;
+  }
+
+  .mobile-cards-list {
+    display: grid;
+  }
+
+  .modal {
+    width: min(680px, 96vw);
+  }
+}
+
 @media (max-width: 740px) {
   .container {
     width: 94%;
     padding-top: 14px;
+    padding-bottom: 18px;
   }
 
   .header-content {
@@ -827,8 +936,8 @@ body {
     max-width: 100%;
   }
 
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+  .header-slogan {
+    font-size: 13px;
   }
 
   .form-grid,
@@ -845,6 +954,31 @@ body {
     flex-wrap: wrap;
   }
 
+  .mobile-actions .btn {
+    width: 100%;
+    font-size: 12px;
+    padding: 9px 8px;
+    gap: 5px;
+  }
+
+  .mobile-actions .btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .server-mobile-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .table-pagination {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
   .table th,
   .table td {
     font-size: 12px;
@@ -853,6 +987,7 @@ body {
 
   .form-actions .btn {
     width: 100%;
+    min-height: 42px;
   }
 
   .toast-container {
@@ -863,5 +998,73 @@ body {
   .toast {
     min-width: 0;
     max-width: 100%;
+  }
+
+  .modal {
+    width: calc(100vw - 14px);
+    max-height: calc(100vh - 20px);
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .modal h3 {
+    font-size: 1.02rem;
+    margin-bottom: 12px;
+    padding-right: 28px;
+  }
+
+  .modal-photo img,
+  .modal-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 12px;
+  }
+
+  .detail-item {
+    padding: 8px 0;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  .future-modules-card {
+    padding: 12px;
+  }
+
+  .module-tags span {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .header-chip {
+    font-size: 11px;
+  }
+
+  .header-text h1 {
+    font-size: 1.35rem;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .filters-panel {
+    padding: 10px;
+  }
+
+  .server-mobile-card {
+    padding: 10px;
+  }
+
+  .photo-preview-card {
+    width: 82px;
+    height: 82px;
   }
 }
