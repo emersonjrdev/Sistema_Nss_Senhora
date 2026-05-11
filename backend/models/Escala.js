@@ -15,6 +15,8 @@ const EscalaSchema = new mongoose.Schema(
     data: { type: String, required: true },
     observacoes: { type: String, default: null },
     atribuicoes: { type: [AtribuicaoSchema], default: [] },
+    /** ID do documento Evento (mesmo valor usado na API / front) — no máximo uma escala por evento */
+    eventoId: { type: String, default: null },
   },
   { timestamps: true }
 );

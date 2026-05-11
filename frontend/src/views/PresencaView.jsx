@@ -40,7 +40,9 @@ export default function PresencaView({ servidores }) {
   }, [eventoId]);
 
   const evento = eventos.find((e) => e.id === eventoId);
-  const escalaDoDia = evento?.data ? escalas.find((e) => e.data === evento.data) : null;
+  const escalaVinculada = evento?.id ? escalas.find((e) => e.eventoId === evento.id) : null;
+  const escalaDoDia =
+    escalaVinculada || (evento?.data ? escalas.find((e) => e.data === evento.data) : null);
 
   const listaPresenca = useMemo(() => {
     const idsNaEscala = new Set((escalaDoDia?.atribuicoes || []).map((a) => a.servidorId));
@@ -75,8 +77,8 @@ export default function PresencaView({ servidores }) {
       <header className="module-section-header">
         <h2>Controle de presença</h2>
         <p>
-          Escolha o evento e marque cada servidor. Se existir escala na <strong>mesma data</strong>, só aparecem os
-          convocados; caso contrário, aparecem todos os cadastrados.
+          Escolha o evento e marque cada servidor. Se existir escala <strong>vinculada ao evento</strong>, ela tem
+          prioridade; senão, usa-se escala na mesma data; caso contrário, listam-se todos os cadastrados.
         </p>
       </header>
 
@@ -94,11 +96,19 @@ export default function PresencaView({ servidores }) {
         </label>
         {escalaDoDia ? (
           <p className="muted presenca-hint">
-            Usando equipe da escala: <strong>{escalaDoDia.titulo}</strong> ({(escalaDoDia.atribuicoes || []).length}{" "}
-            pessoas).
+            {escalaVinculada ? (
+              <>
+                Equipe da escala <strong>vinculada a este evento</strong>:{" "}
+              </>
+            ) : (
+              <>Equipe da escala na <strong>mesma data</strong> (sem vínculo direto): </>
+            )}
+            <strong>{escalaDoDia.titulo}</strong> ({(escalaDoDia.atribuicoes || []).length} pessoas).
           </p>
         ) : (
-          <p className="muted presenca-hint">Nenhuma escala nesta data: listando todos os servidores cadastrados.</p>
+          <p className="muted presenca-hint">
+            Nenhuma escala vinculada nem na mesma data: listando todos os servidores cadastrados.
+          </p>
         )}
       </div>
 

@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { escalasService } from "../services/escalasService";
+import { eventosService } from "../services/eventosService";
 
 function serverId(s) {
   return String(s._id || s.id || "");
@@ -7,12 +8,14 @@ function serverId(s) {
 
 export default function EscalasView({ servidores, toast }) {
   const [lista, setLista] = useState([]);
-  const [form, setForm] = useState({ titulo: "", data: "", observacoes: "" });
+  const [eventos, setEventos] = useState([]);
+  const [form, setForm] = useState({ eventoId: "", titulo: "", data: "", observacoes: "" });
   const [editingId, setEditingId] = useState(null);
 
   const reload = useCallback(async () => {
-    const l = await escalasService.list();
+    const [l, ev] = await Promise.all([escalasService.list(), eventosService.list()]);
     setLista(l);
+    setEventos(ev);
   }, []);
 
   useEffect(() => {
@@ -21,12 +24,44 @@ export default function EscalasView({ servidores, toast }) {
 
   const escalaEdit = lista.find((e) => e.id === editingId);
 
+  const eventosDisponiveis = useMemo(
+    () => eventos.filter((ev) => !lista.some((es) => es.eventoId === ev.id)),
+    [eventos, lista]
+  );
+
+  const eventoPorId = useMemo(() => {
+    const m = new Map();
+    eventos.forEach((ev) => m.set(ev.id, ev));
+    return m;
+  }, [eventos]);
+
+  function onSelectEventoVinculo(evId) {
+    if (!evId) {
+      setForm((f) => ({ ...f, eventoId: "", titulo: "", data: "" }));
+      return;
+    }
+    const ev = eventos.find((e) => e.id === evId);
+    if (!ev) return;
+    setForm((f) => ({
+      ...f,
+      eventoId: ev.id,
+      titulo: ev.titulo,
+      data: ev.data || "",
+    }));
+  }
+
   async function handleCreate(e) {
     e.preventDefault();
     try {
-      await escalasService.create({ ...form, atribuicoes: [] });
+      await escalasService.create({
+        titulo: form.titulo,
+        data: form.data,
+        observacoes: form.observacoes,
+        atribuicoes: [],
+        eventoId: form.eventoId || undefined,
+      });
       toast?.success("Escala criada. Selecione-a na lista para montar a equipe.");
-      setForm({ titulo: "", data: "", observacoes: "" });
+      setForm({ eventoId: "", titulo: "", data: "", observacoes: "" });
       await reload();
     } catch (err) {
       toast?.error(err.message || "Erro ao salvar");
@@ -79,12 +114,41 @@ export default function EscalasView({ servidores, toast }) {
     <section className="module-escalas">
       <header className="module-section-header">
         <h2>Escalas de serviço</h2>
-        <p>Crie uma escala por data e marque quem está convocado. A lista de presença pode usar a mesma data do evento.</p>
+        <p>
+          Escolha um <strong>evento cadastrado</strong> para preencher data e título automaticamente (um evento só pode ter
+          uma escala). A presença usa primeiro o vínculo com o evento e, se não houver, a mesma data.
+        </p>
       </header>
 
       <div className="module-two-col">
         <form className="card form-card-inner form" onSubmit={handleCreate}>
           <h3 className="module-subtitle">Nova escala</h3>
+          {eventos.length > 0 && (
+            <label>
+              Vincular a evento
+              <select
+                value={form.eventoId}
+                onChange={(e) => onSelectEventoVinculo(e.target.value)}
+                aria-label="Selecionar evento para vincular à escala"
+              >
+                <option value="">Escala avulsa (preencher título e data manualmente)</option>
+                {eventosDisponiveis.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.titulo}
+                    {ev.data
+                      ? ` — ${new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR")}`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {eventos.length === 0 && (
+            <p className="muted small-hint" style={{ marginTop: 0 }}>
+              Nenhum evento cadastrado. Crie eventos no módulo correspondente para vincular escalas com um clique, ou use
+              escala avulsa abaixo.
+            </p>
+          )}
           <label>
             Título *
             <input
@@ -92,6 +156,8 @@ export default function EscalasView({ servidores, toast }) {
               onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))}
               placeholder="Ex: Missa 19h — domingo"
               required
+              readOnly={Boolean(form.eventoId)}
+              className={form.eventoId ? "input-readonly-sync" : undefined}
             />
           </label>
           <label>
@@ -101,6 +167,8 @@ export default function EscalasView({ servidores, toast }) {
               value={form.data}
               onChange={(e) => setForm((f) => ({ ...f, data: e.target.value }))}
               required
+              readOnly={Boolean(form.eventoId)}
+              className={form.eventoId ? "input-readonly-sync" : undefined}
             />
           </label>
           <label>
@@ -124,27 +192,35 @@ export default function EscalasView({ servidores, toast }) {
             <p className="empty-inline">Nenhuma escala ainda.</p>
           ) : (
             <ul className="escalas-lista">
-              {lista.map((es) => (
-                <li key={es.id} className={`escalas-item ${editingId === es.id ? "escalas-item--active" : ""}`}>
-                  <div>
-                    <strong>{es.titulo}</strong>
-                    <p className="muted">
-                      {es.data
-                        ? new Date(es.data + "T12:00:00").toLocaleDateString("pt-BR")
-                        : "-"}{" "}
-                      · {(es.atribuicoes || []).length} na equipe
-                    </p>
-                  </div>
-                  <div className="escalas-acoes">
-                    <button type="button" className="btn small" onClick={() => setEditingId(es.id === editingId ? null : es.id)}>
-                      {editingId === es.id ? "Fechar" : "Montar equipe"}
-                    </button>
-                    <button type="button" className="btn small danger" onClick={() => handleRemoveEscala(es.id)}>
-                      Excluir
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {lista.map((es) => {
+                const evVinc = es.eventoId ? eventoPorId.get(es.eventoId) : null;
+                return (
+                  <li key={es.id} className={`escalas-item ${editingId === es.id ? "escalas-item--active" : ""}`}>
+                    <div>
+                      <strong>{es.titulo}</strong>
+                      {evVinc && (
+                        <span className="escala-evento-badge" title="Vinculada a um evento">
+                          Evento: {evVinc.titulo}
+                        </span>
+                      )}
+                      <p className="muted">
+                        {es.data
+                          ? new Date(es.data + "T12:00:00").toLocaleDateString("pt-BR")
+                          : "-"}{" "}
+                        · {(es.atribuicoes || []).length} na equipe
+                      </p>
+                    </div>
+                    <div className="escalas-acoes">
+                      <button type="button" className="btn small" onClick={() => setEditingId(es.id === editingId ? null : es.id)}>
+                        {editingId === es.id ? "Fechar" : "Montar equipe"}
+                      </button>
+                      <button type="button" className="btn small danger" onClick={() => handleRemoveEscala(es.id)}>
+                        Excluir
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

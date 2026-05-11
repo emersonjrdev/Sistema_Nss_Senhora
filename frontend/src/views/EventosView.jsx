@@ -1,10 +1,22 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { eventosService } from "../services/eventosService";
+import { presencaService } from "../services/presencaService";
 
 const TIPOS = ["Missa", "Festa litúrgica", "Formação", "Reunião", "Outro"];
 
-export default function EventosView({ toast }) {
+const STATUS_LABEL = {
+  presente: "Presente",
+  ausente: "Ausente",
+  justificado: "Justificado",
+};
+
+function serverId(s) {
+  return String(s._id || s.id || "");
+}
+
+export default function EventosView({ toast, servidores = [] }) {
   const [lista, setLista] = useState([]);
+  const [presencaPorEvento, setPresencaPorEvento] = useState({});
   const [form, setForm] = useState({
     titulo: "",
     data: "",
@@ -22,6 +34,45 @@ export default function EventosView({ toast }) {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lista.length) {
+        if (!cancelled) setPresencaPorEvento({});
+        return;
+      }
+      const pairs = await Promise.all(
+        lista.map(async (ev) => {
+          const m = await presencaService.getForEvento(ev.id);
+          return [ev.id, m || {}];
+        })
+      );
+      if (!cancelled) setPresencaPorEvento(Object.fromEntries(pairs));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [lista]);
+
+  const nomeServidor = useMemo(() => {
+    const map = new Map();
+    servidores.forEach((s) => map.set(serverId(s), s.name || "—"));
+    return (id) => map.get(id) || "Servidor";
+  }, [servidores]);
+
+  function linhasPresenca(eventoId) {
+    const map = presencaPorEvento[eventoId] || {};
+    return Object.entries(map)
+      .filter(([, st]) => Boolean(st))
+      .map(([sid, st]) => ({
+        sid,
+        nome: nomeServidor(sid),
+        st,
+        label: STATUS_LABEL[st] || st,
+      }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -50,7 +101,10 @@ export default function EventosView({ toast }) {
     <section className="module-eventos">
       <header className="module-section-header">
         <h2>Eventos e missas</h2>
-        <p>Cadastre celebrações e atividades. Essas datas podem ser usadas na escala e na chamada de presença.</p>
+        <p>
+          Cadastre celebrações e atividades. No módulo <strong>Escalas</strong> você pode vincular uma escala a cada
+          evento; a <strong>presença</strong> confirmada aparece abaixo no respectivo evento.
+        </p>
       </header>
 
       <div className="module-two-col">
@@ -124,29 +178,51 @@ export default function EventosView({ toast }) {
             <p className="empty-inline">Nenhum evento cadastrado.</p>
           ) : (
             <ul className="eventos-lista">
-              {lista.map((ev) => (
-                <li key={ev.id} className="eventos-item">
-                  <div>
-                    <strong>{ev.titulo}</strong>
-                    <span className="funcao-badge">{ev.tipo}</span>
-                    <p className="muted">
-                      {ev.data
-                        ? new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", {
-                            weekday: "short",
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "-"}
-                      {ev.hora ? ` · ${ev.hora}` : ""}
-                      {ev.local ? ` · ${ev.local}` : ""}
-                    </p>
-                  </div>
-                  <button type="button" className="btn small danger" onClick={() => handleRemove(ev.id)}>
-                    Excluir
-                  </button>
-                </li>
-              ))}
+              {lista.map((ev) => {
+                const linhas = linhasPresenca(ev.id);
+                return (
+                  <li key={ev.id} className="eventos-item">
+                    <div className="eventos-item-content">
+                      <div className="eventos-item-head">
+                        <strong>{ev.titulo}</strong>
+                        <span className="funcao-badge">{ev.tipo}</span>
+                      </div>
+                      <p className="muted">
+                        {ev.data
+                          ? new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", {
+                              weekday: "short",
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "-"}
+                        {ev.hora ? ` · ${ev.hora}` : ""}
+                        {ev.local ? ` · ${ev.local}` : ""}
+                      </p>
+                      {linhas.length > 0 ? (
+                        <div className="evento-presenca-bloco">
+                          <span className="evento-presenca-titulo">Presença registrada neste evento</span>
+                          <ul className="evento-presenca-lista">
+                            {linhas.map((row) => (
+                              <li key={row.sid} className="evento-presenca-linha">
+                                <span className="evento-presenca-nome">{row.nome}</span>
+                                <span className={`pres-pill pres-pill--${row.st}`}>{row.label}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p className="evento-presenca-vazia muted">Nenhuma presença confirmada ainda neste evento.</p>
+                      )}
+                    </div>
+                    <div className="eventos-item-actions">
+                      <button type="button" className="btn small danger" onClick={() => handleRemove(ev.id)}>
+                        Excluir
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

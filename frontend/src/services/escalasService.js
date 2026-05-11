@@ -22,11 +22,13 @@ export const escalasService = {
   },
 
   async create(payload) {
+    const eid = payload.eventoId ? String(payload.eventoId).trim() : "";
     const body = {
       titulo: String(payload.titulo || "").trim(),
       data: payload.data || null,
       observacoes: (payload.observacoes && String(payload.observacoes).trim()) || null,
       atribuicoes: Array.isArray(payload.atribuicoes) ? payload.atribuicoes : [],
+      eventoId: eid || null,
     };
     if (!body.titulo || !body.data) throw new Error("Título e data são obrigatórios");
 
@@ -41,6 +43,9 @@ export const escalasService = {
     }
 
     const list = readJson(KEY, []);
+    if (eid && list.some((x) => x.eventoId === eid)) {
+      throw new Error("Já existe escala vinculada a este evento.");
+    }
     const item = {
       id: uuidv4(),
       ...body,
@@ -65,11 +70,21 @@ export const escalasService = {
     const list = readJson(KEY, []);
     const idx = list.findIndex((x) => x.id === id);
     if (idx === -1) throw new Error("Escala não encontrada");
+    const nextEventoId =
+      patch.eventoId !== undefined
+        ? patch.eventoId
+          ? String(patch.eventoId).trim()
+          : null
+        : list[idx].eventoId;
+    if (nextEventoId && list.some((x, i) => i !== idx && x.eventoId === nextEventoId)) {
+      throw new Error("Já existe escala vinculada a este evento.");
+    }
     list[idx] = {
       ...list[idx],
       ...patch,
       id,
       atribuicoes: patch.atribuicoes != null ? patch.atribuicoes : list[idx].atribuicoes,
+      eventoId: patch.eventoId !== undefined ? nextEventoId : list[idx].eventoId,
     };
     writeJson(KEY, list);
     return list[idx];

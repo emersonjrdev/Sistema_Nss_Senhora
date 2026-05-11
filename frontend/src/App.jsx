@@ -63,7 +63,7 @@ export default function App() {
           />
         );
       case "relatorios":
-        return <RelatoriosView servidores={servidores} />;
+        return <RelatoriosView servidores={servidores} toast={toast} />;
       case "aniversariantes":
         return <AniversariantesView servidores={servidores} />;
       case "comunidades":
@@ -73,7 +73,7 @@ export default function App() {
       case "presenca":
         return <PresencaView servidores={servidores} />;
       case "eventos":
-        return <EventosView toast={toast} />;
+        return <EventosView toast={toast} servidores={servidores} />;
       case "historico":
         return <HistoricoView servidores={servidores} toast={toast} />;
       default:

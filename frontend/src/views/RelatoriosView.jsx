@@ -1,7 +1,9 @@
-import React, { useMemo } from "react";
-import { downloadTextFile, servidoresToCsvRows } from "../utils/exportCsv";
+import React, { useMemo, useState } from "react";
+import { downloadServidoresPdf } from "../utils/exportServidoresPdf";
 
-export default function RelatoriosView({ servidores }) {
+export default function RelatoriosView({ servidores, toast }) {
+  const [exporting, setExporting] = useState(false);
+
   const stats = useMemo(() => {
     const total = servidores.length;
     const ativos = servidores.filter((s) => (s.status || "Ativo") === "Ativo").length;
@@ -18,17 +20,25 @@ export default function RelatoriosView({ servidores }) {
     return { total, ativos, topFuncoes, comTelefone, comNascimento };
   }, [servidores]);
 
-  function handleExport() {
-    const csv = servidoresToCsvRows(servidores);
-    const name = `servidores-altar-${new Date().toISOString().slice(0, 10)}.csv`;
-    downloadTextFile(name, csv);
+  async function handleExportPdf() {
+    if (!servidores.length) return;
+    try {
+      setExporting(true);
+      await downloadServidoresPdf(servidores);
+      toast?.success("PDF gerado e baixado.");
+    } catch (err) {
+      console.error(err);
+      toast?.error(err.message || "Não foi possível gerar o PDF.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
     <section className="module-relatorios">
       <header className="module-section-header">
         <h2>Relatórios</h2>
-        <p>Resumo dos cadastros e exportação para planilha (CSV).</p>
+        <p>Resumo dos cadastros e exportação em PDF para impressão ou arquivo.</p>
       </header>
 
       <div className="relatorio-grid">
@@ -67,8 +77,13 @@ export default function RelatoriosView({ servidores }) {
       </div>
 
       <div className="relatorio-actions">
-        <button type="button" className="btn btn-primary" onClick={handleExport} disabled={!servidores.length}>
-          Exportar CSV
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={handleExportPdf}
+          disabled={!servidores.length || exporting}
+        >
+          {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
         {!servidores.length && (
           <span className="muted">Cadastre servidores para habilitar a exportação.</span>

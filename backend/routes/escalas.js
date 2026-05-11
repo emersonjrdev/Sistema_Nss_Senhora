@@ -24,15 +24,23 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { titulo, data, observacoes, atribuicoes } = req.body;
+    const { titulo, data, observacoes, atribuicoes, eventoId } = req.body;
     if (!titulo || !data) {
       return res.status(400).json({ error: "Título e data são obrigatórios" });
+    }
+    const eid = eventoId ? String(eventoId).trim() : null;
+    if (eid) {
+      const dup = await Escala.findOne({ eventoId: eid });
+      if (dup) {
+        return res.status(409).json({ error: "Já existe escala vinculada a este evento." });
+      }
     }
     const doc = await Escala.create({
       titulo: String(titulo).trim(),
       data,
       observacoes: observacoes || null,
       atribuicoes: Array.isArray(atribuicoes) ? atribuicoes : [],
+      eventoId: eid || null,
     });
     const o = doc.toObject();
     res.status(201).json({ ...o, id: String(o._id) });
@@ -48,6 +56,16 @@ router.put("/:id", async (req, res) => {
     const patch = { ...req.body };
     if (patch.atribuicoes != null && !Array.isArray(patch.atribuicoes)) {
       return res.status(400).json({ error: "atribuicoes deve ser array" });
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "eventoId")) {
+      const eid = patch.eventoId ? String(patch.eventoId).trim() : null;
+      patch.eventoId = eid || null;
+      if (eid) {
+        const dup = await Escala.findOne({ eventoId: eid, _id: { $ne: id } });
+        if (dup) {
+          return res.status(409).json({ error: "Já existe escala vinculada a este evento." });
+        }
+      }
     }
     const updated = await Escala.findByIdAndUpdate(id, patch, {
       new: true,
