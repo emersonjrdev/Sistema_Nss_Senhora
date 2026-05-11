@@ -37,6 +37,11 @@ body {
   min-height: 100vh;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html,
 body {
   overflow-x: hidden;
@@ -45,7 +50,8 @@ body {
 .container {
   width: min(1320px, 96%);
   margin: 0 auto;
-  padding: 24px 0 30px;
+  padding: 24px max(0px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom)) max(0px, env(safe-area-inset-left));
+  box-sizing: border-box;
 }
 
 main {
@@ -921,9 +927,14 @@ main {
 
 @media (max-width: 740px) {
   .container {
-    width: 94%;
-    padding-top: 14px;
-    padding-bottom: 18px;
+    width: 100%;
+    max-width: 100%;
+    padding: 16px max(12px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .app-header {
+    margin-bottom: 16px;
+    border-radius: var(--radius-md);
   }
 
   .header-content {
@@ -1303,16 +1314,23 @@ main {
   line-height: 1.55;
 }
 
+.module-section-header {
+  margin-bottom: 2px;
+}
+
 .module-section-header h2 {
   margin: 0 0 6px;
   color: var(--primary-800);
-  font-size: 1.2rem;
+  font-size: clamp(1.05rem, 4vw, 1.2rem);
+  line-height: 1.25;
 }
 
 .module-section-header p {
   margin: 0 0 14px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: clamp(13px, 3.2vw, 14px);
+  line-height: 1.45;
+  max-width: 72ch;
 }
 
 .relatorio-grid {
@@ -1775,5 +1793,187 @@ main {
 @media (max-width: 900px) {
   .module-two-col {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ——— Celular: layout, toques confortáveis e áreas seguras ——— */
+@media (max-width: 640px) {
+  .app-main-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .mobile-menu-btn {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .app-main-breadcrumb {
+    text-align: center;
+    width: 100%;
+  }
+
+  .app-sidebar {
+    width: min(300px, 90vw);
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .sidebar-nav-item {
+    min-height: 48px;
+    padding: 12px 10px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+
+  .form input,
+  .form select,
+  .form textarea,
+  .filters-panel input,
+  .filters-panel select {
+    font-size: 16px;
+  }
+
+  .form-card-inner,
+  .list-card-inner {
+    padding: 12px;
+  }
+
+  .module-two-col {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .eventos-item,
+  .escalas-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .eventos-item-actions {
+    width: 100%;
+  }
+
+  .eventos-item-actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .escalas-acoes {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .escalas-acoes .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .escala-evento-badge {
+    display: inline-block;
+    margin-left: 0;
+    margin-top: 6px;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  .presenca-toolbar label {
+    width: 100%;
+  }
+
+  .presenca-toolbar select {
+    width: 100%;
+    max-width: 100%;
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .presenca-linha {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .presenca-botoes {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .presenca-botoes .btn.small {
+    width: 100%;
+    min-height: 46px;
+    font-size: 14px;
+    justify-content: center;
+  }
+
+  .evento-presenca-linha {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .evento-presenca-nome {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .escala-check-list {
+    grid-template-columns: 1fr;
+  }
+
+  .comunidades-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .relatorio-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .relatorio-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .relatorio-actions .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .app-footer {
+    margin-top: 14px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    font-size: 12px;
+  }
+
+  .toast-container {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+  }
+}
+
+@media (max-width: 380px) {
+  .header-content {
+    padding: 16px 12px;
+  }
+
+  .logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .nav-status {
+    font-size: 8px;
+    padding: 2px 5px;
   }
 }
