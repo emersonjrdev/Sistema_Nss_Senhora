@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
+import { maskPhoneBR, isValidBrPhoneMasked } from "../utils/phoneMask";
 
 const DEFAULT_STATUS = "Ativo";
 
@@ -114,8 +115,8 @@ export default function ServerForm({ editing, onSaved, toast }) {
     if (!formData.name.trim()) {
       nextErrors.name = "Nome é obrigatório";
     }
-    if (formData.telefone && !/^[\d()\s+\-]{8,20}$/.test(formData.telefone)) {
-      nextErrors.telefone = "Telefone inválido";
+    if (formData.telefone && !isValidBrPhoneMasked(formData.telefone)) {
+      nextErrors.telefone = "Informe um telefone válido (10 ou 11 dígitos)";
     }
     if (
       formData.nascimento &&
@@ -162,8 +163,9 @@ export default function ServerForm({ editing, onSaved, toast }) {
         createdAt: editing?.createdAt || new Date().toISOString(),
       };
 
-      if (editing?._id) {
-        await storageService.updateUser(editing._id, userData);
+      const editId = editing?._id || editing?.id;
+      if (editId) {
+        await storageService.updateUser(editId, userData);
         toast?.success("Servidor atualizado com sucesso!");
       } else {
         await storageService.createUser(userData);
@@ -213,8 +215,10 @@ export default function ServerForm({ editing, onSaved, toast }) {
           Telefone
           <input
             name="telefone"
+            inputMode="tel"
+            autoComplete="tel"
             value={formData.telefone}
-            onChange={(e) => updateField("telefone", e.target.value)}
+            onChange={(e) => updateField("telefone", maskPhoneBR(e.target.value))}
             placeholder="(00) 00000-0000"
           />
           {errors.telefone && <small>{errors.telefone}</small>}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { storageService } from "../services/storageService";
 import DetailsModal from "./DetailsModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
@@ -27,6 +27,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
   const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sort, setSort] = useState({ key: "nome", dir: "asc" });
 
   const loadServers = useCallback(async () => {
     try {
@@ -51,10 +52,46 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters]);
+  }, [filters, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(servidores.length / ITEMS_PER_PAGE));
-  const paginatedServers = servidores.slice(
+  const sortedServers = useMemo(() => {
+    const list = [...servidores];
+    const mult = sort.dir === "asc" ? 1 : -1;
+    list.sort((a, b) => {
+      if (sort.key === "nome") {
+        return mult * String(a.name || "").localeCompare(String(b.name || ""), "pt-BR", {
+          sensitivity: "base",
+        });
+      }
+      if (sort.key === "funcao") {
+        return mult * String(a.funcao || "").localeCompare(String(b.funcao || ""), "pt-BR", {
+          sensitivity: "base",
+        });
+      }
+      if (sort.key === "inicio") {
+        const da = a.inicio ? new Date(a.inicio).getTime() : 0;
+        const db = b.inicio ? new Date(b.inicio).getTime() : 0;
+        return mult * (da - db);
+      }
+      return 0;
+    });
+    return list;
+  }, [servidores, sort]);
+
+  function toggleSort(key) {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, dir: "asc" };
+      return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
+    });
+  }
+
+  function sortIndicator(key) {
+    if (sort.key !== key) return "";
+    return sort.dir === "asc" ? " ▲" : " ▼";
+  }
+
+  const totalPages = Math.max(1, Math.ceil(sortedServers.length / ITEMS_PER_PAGE));
+  const paginatedServers = sortedServers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -102,19 +139,31 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
             <div className="spinner"></div>
             <p>Carregando servidores...</p>
           </div>
-        ) : servidores.length === 0 ? (
+        ) : sortedServers.length === 0 ? (
           <EmptyState />
         ) : (
           <table className="table">
             <thead>
               <tr>
-                <th>Foto</th>
-                <th>Nome</th>
-                <th>Função</th>
-                <th>Status</th>
-                <th>Início</th>
-                <th>Local</th>
-                <th>Ações</th>
+                <th scope="col">Foto</th>
+                <th scope="col" className="th-sort-cell">
+                  <button type="button" className="th-sort" onClick={() => toggleSort("nome")}>
+                    Nome{sortIndicator("nome")}
+                  </button>
+                </th>
+                <th scope="col" className="th-sort-cell">
+                  <button type="button" className="th-sort" onClick={() => toggleSort("funcao")}>
+                    Função{sortIndicator("funcao")}
+                  </button>
+                </th>
+                <th scope="col">Status</th>
+                <th scope="col" className="th-sort-cell">
+                  <button type="button" className="th-sort" onClick={() => toggleSort("inicio")}>
+                    Início{sortIndicator("inicio")}
+                  </button>
+                </th>
+                <th scope="col">Local</th>
+                <th scope="col">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -176,7 +225,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
         )}
       </div>
 
-      {!loading && servidores.length > 0 && (
+      {!loading && sortedServers.length > 0 && (
         <div className="mobile-cards-list">
           {paginatedServers.map((s) => (
             <article key={`mobile-${s._id || s.id}`} className="server-mobile-card">
@@ -252,7 +301,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
         </div>
       )}
 
-      {!loading && servidores.length > ITEMS_PER_PAGE && (
+      {!loading && sortedServers.length > ITEMS_PER_PAGE && (
         <div className="table-pagination">
           <button
             className="btn secondary small"
@@ -263,7 +312,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
             Anterior
           </button>
           <span>
-            Pagina {currentPage} de {totalPages}
+            Página {currentPage} de {totalPages}
           </span>
           <button
             className="btn secondary small"
@@ -271,7 +320,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           >
-            Proxima
+            Próxima
           </button>
         </div>
       )}
