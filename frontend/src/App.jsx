@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import ToastContainer from "./components/ToastContainer";
 import HeaderInstitucional from "./components/HeaderInstitucional";
 import AppSidebar from "./components/AppSidebar";
-import ModuleComingSoon from "./components/ModuleComingSoon";
 import ServidoresView from "./views/ServidoresView";
 import RelatoriosView from "./views/RelatoriosView";
 import AniversariantesView from "./views/AniversariantesView";
 import ComunidadesView from "./views/ComunidadesView";
+import EventosView from "./views/EventosView";
+import EscalasView from "./views/EscalasView";
+import PresencaView from "./views/PresencaView";
+import HistoricoView from "./views/HistoricoView";
 import { getModuleById } from "./config/modules";
-import { ROADMAPS } from "./config/moduleRoadmaps";
 import { storageService } from "./services/storageService";
 import { useToast } from "./hooks/useToast";
 
@@ -67,37 +69,13 @@ export default function App() {
       case "comunidades":
         return <ComunidadesView servidores={servidores} />;
       case "escalas":
-        return (
-          <ModuleComingSoon
-            title="Escalas de serviço"
-            description="Montagem e publicação de escalas por celebração, com funções e servidores definidos pela paróquia."
-            roadmap={ROADMAPS.escalas}
-          />
-        );
+        return <EscalasView servidores={servidores} toast={toast} />;
       case "presenca":
-        return (
-          <ModuleComingSoon
-            title="Controle de presença"
-            description="Acompanhamento da frequência dos servidores nas missas e eventos, com relatórios para a coordenação."
-            roadmap={ROADMAPS.presenca}
-          />
-        );
+        return <PresencaView servidores={servidores} />;
       case "eventos":
-        return (
-          <ModuleComingSoon
-            title="Eventos e missas"
-            description="Calendário paroquial integrado às escalas e à comunicação com as comunidades."
-            roadmap={ROADMAPS.eventos}
-          />
-        );
+        return <EventosView toast={toast} />;
       case "historico":
-        return (
-          <ModuleComingSoon
-            title="Histórico do servidor"
-            description="Registro contínuo da caminhada de cada servidor no altar, alinhado à pastoral da paróquia."
-            roadmap={ROADMAPS.historico}
-          />
-        );
+        return <HistoricoView servidores={servidores} toast={toast} />;
       default:
         return null;
     }

@@ -7,6 +7,10 @@ const path = require('path');
 const userRoutes = require('./routes/user');
 const uploadRoutes = require('./routes/upload');
 const servidoresRoutes = require('./routes/servidores');
+const eventosRoutes = require('./routes/eventos');
+const escalasRoutes = require('./routes/escalas');
+const presencaRoutes = require('./routes/presenca');
+const historicoRoutes = require('./routes/historico');
 
 const app = express();
 
@@ -17,6 +21,10 @@ app.use(express.json());
 app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/servidores', servidoresRoutes);
+app.use('/api/eventos', eventosRoutes);
+app.use('/api/escalas', escalasRoutes);
+app.use('/api/presenca', presencaRoutes);
+app.use('/api/historico', historicoRoutes);
 
 app.get("/api/test-insert", async (req, res) => {
   try {
