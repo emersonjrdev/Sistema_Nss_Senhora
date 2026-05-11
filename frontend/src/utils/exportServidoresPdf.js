@@ -16,11 +16,36 @@ function formatDatePt(v) {
   }
 }
 
+function resolveHtml2Pdf(mod) {
+  const d = mod?.default ?? mod;
+  if (typeof d === "function") return d;
+  if (d && typeof d.default === "function") return d.default;
+  return null;
+}
+
+function waitFrames(n = 2) {
+  return new Promise((resolve) => {
+    function step() {
+      if (n <= 0) resolve();
+      else {
+        n -= 1;
+        requestAnimationFrame(step);
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
 /**
  * Gera PDF institucional da lista de servidores (UTF-8, layout para impressão).
+ * O elemento precisa estar no viewport com dimensões reais — html2canvas ignora conteúdo em left:-9999px.
  */
 export async function downloadServidoresPdf(servidores) {
-  const { default: html2pdf } = await import("html2pdf.js");
+  const mod = await import("html2pdf.js");
+  const html2pdf = resolveHtml2Pdf(mod);
+  if (!html2pdf) {
+    throw new Error("Não foi possível carregar a biblioteca de PDF.");
+  }
 
   const hoje = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -47,8 +72,29 @@ export async function downloadServidoresPdf(servidores) {
 
   const wrap = document.createElement("div");
   wrap.setAttribute("data-pdf-root", "1");
-  wrap.style.cssText =
-    "position:absolute;left:-9999px;top:0;width:190mm;box-sizing:border-box;padding:0;background:#fff;color:#1e293b;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:9pt;line-height:1.35;";
+  wrap.setAttribute("aria-hidden", "true");
+  /* Cobertura A4 paisagem em px (~96dpi); visível ao canvas, quase imperceptível ao usuário */
+  wrap.style.cssText = [
+    "position:fixed",
+    "left:0",
+    "top:0",
+    "width:1123px",
+    "max-width:100vw",
+    "min-height:200px",
+    "box-sizing:border-box",
+    "padding:16px 20px",
+    "margin:0",
+    "background:#ffffff",
+    "color:#1e293b",
+    "font-family:Segoe UI,system-ui,-apple-system,sans-serif",
+    "font-size:9pt",
+    "line-height:1.35",
+    "z-index:2147483646",
+    "opacity:0.02",
+    "pointer-events:none",
+    "overflow:visible",
+  ].join(";");
+
   wrap.innerHTML = `
     <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#1e40af 100%);color:#fff;padding:18px 22px;border-radius:0 0 14px 14px;margin-bottom:14px;">
       <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.85;">Pastoral do Altar</div>
@@ -78,17 +124,43 @@ export async function downloadServidoresPdf(servidores) {
   document.body.appendChild(wrap);
 
   const opt = {
-    margin: [10, 10, 10, 10],
+    margin: [8, 8, 8, 8],
     filename,
-    image: { type: "jpeg", quality: 0.96 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
+    image: { type: "jpeg", quality: 0.92 },
+    html2canvas: {
+      scale: Math.min(2, (window.devicePixelRatio || 1) * 1.25),
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0,
+    },
     jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    pagebreak: { mode: ["css", "legacy"] },
   };
 
   try {
-    await html2pdf().set(opt).from(wrap).save();
+    await waitFrames(2);
+    const worker = html2pdf().set(opt).from(wrap);
+    const blob = await worker.outputPdf("blob");
+    if (!(blob instanceof Blob) || blob.size === 0) {
+      throw new Error("O PDF gerado está vazio.");
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    requestAnimationFrame(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
   } finally {
-    document.body.removeChild(wrap);
+    if (wrap.parentNode) {
+      wrap.parentNode.removeChild(wrap);
+    }
   }
 }
