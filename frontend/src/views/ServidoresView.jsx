@@ -17,6 +17,25 @@ export default function ServidoresView({
   const { canEdit } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
 
+  const closeForm = useCallback(() => {
+    setFormOpen(false);
+    onCancelForm?.();
+  }, [onCancelForm]);
+
+  const openCreate = useCallback(() => {
+    if (!canEdit) {
+      toast?.error("Faça login como editor para cadastrar.");
+      return;
+    }
+    setFormOpen(true);
+    onEdit(null);
+  }, [canEdit, onEdit, toast]);
+
+  const handleSavedAndClose = useCallback(() => {
+    setFormOpen(false);
+    onSaved?.();
+  }, [onSaved]);
+
   useEffect(() => {
     if (editing) setFormOpen(true);
   }, [editing]);
@@ -38,25 +57,6 @@ export default function ServidoresView({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [formOpen, closeForm]);
-
-  const openCreate = useCallback(() => {
-    if (!canEdit) {
-      toast?.error("Faça login como editor para cadastrar.");
-      return;
-    }
-    setFormOpen(true);
-    onEdit(null);
-  }, [canEdit, onEdit, toast]);
-
-  const closeForm = useCallback(() => {
-    setFormOpen(false);
-    onCancelForm?.();
-  }, [onCancelForm]);
-
-  const handleSavedAndClose = useCallback(() => {
-    setFormOpen(false);
-    onSaved?.();
-  }, [onSaved]);
 
   const drawerTitle = editing ? "Editar servidor" : "Novo servidor";
 
