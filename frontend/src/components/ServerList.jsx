@@ -8,7 +8,7 @@ import { formatDateOnlyPtBR, calendarDateSortKey } from "../utils/dateOnly";
 import StatusBadge from "./StatusBadge";
 import EmptyState from "./EmptyState";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8;
 
 function getAvatarFallback(name) {
   const first = (name || "").split(" ").filter(Boolean);

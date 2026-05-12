@@ -6,8 +6,7 @@ export default function EmptyState() {
       <div className="empty-icon">⛪</div>
       <h4>Nenhum servidor encontrado</h4>
       <p>
-        Ajuste os filtros ou realize um novo cadastro para começar a gestão pastoral
-        dos servidores do altar.
+        Ajuste os filtros ou use o botão <strong>Novo servidor</strong> acima quando estiver autenticado como editor.
       </p>
     </div>
   );

@@ -41,6 +41,10 @@ export default function App() {
     setRefreshList((prev) => prev + 1);
   };
 
+  const handleCancelServidorForm = () => {
+    setEditing(null);
+  };
+
   function selectModule(id) {
     setActiveModule(id);
     setSidebarOpen(false);
@@ -60,6 +64,7 @@ export default function App() {
             editing={editing}
             onEdit={(srv) => setEditing(srv)}
             onSaved={handleSaved}
+            onCancelForm={handleCancelServidorForm}
             refreshTrigger={refreshList}
             toast={toast}
           />

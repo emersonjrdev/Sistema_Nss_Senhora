@@ -14,7 +14,7 @@ function getInitials(name) {
   return (parts[0]?.[0] || "") + (parts[1]?.[0] || parts[0]?.[1] || "");
 }
 
-export default function ServerForm({ editing, onSaved, toast }) {
+export default function ServerForm({ editing, onSaved, onCancel, toast }) {
   const { canEdit } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
@@ -95,7 +95,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
     reader.readAsDataURL(selectedFile);
   }
 
-  function handleClear() {
+  function resetFormState() {
     setFormData({
       name: "",
       funcao: "",
@@ -110,7 +110,20 @@ export default function ServerForm({ editing, onSaved, toast }) {
     setFile(null);
     setPhotoPreview(null);
     setErrors({});
+  }
+
+  function handleAfterSave() {
+    resetFormState();
     if (onSaved) onSaved();
+  }
+
+  function handleCancelClose() {
+    resetFormState();
+    if (onCancel) onCancel();
+  }
+
+  function handleLimparCampos() {
+    resetFormState();
   }
 
   function validate() {
@@ -175,7 +188,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
         toast?.success("Servidor cadastrado com sucesso!");
       }
 
-      handleClear();
+      handleAfterSave();
       setUploading(false);
     } catch (err) {
       console.error("Erro ao salvar:", err);
@@ -352,7 +365,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
           <button
             type="button"
             className="btn secondary"
-            onClick={handleClear}
+            onClick={handleCancelClose}
             disabled={uploading}
           >
             Cancelar
@@ -362,7 +375,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
           <button
             type="button"
             className="btn secondary"
-            onClick={handleClear}
+            onClick={handleLimparCampos}
             disabled={uploading}
           >
             Limpar
