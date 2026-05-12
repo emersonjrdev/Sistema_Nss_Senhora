@@ -1,4 +1,5 @@
 import React from "react";
+import { formatDateOnlyPtBR } from "../utils/dateOnly";
 
 function getAvatarFallback(name) {
   const parts = (name || "").split(" ").filter(Boolean);
@@ -57,13 +58,13 @@ export default function DetailsModal({ server, onClose }) {
             <div className="detail-item">
               <strong>Nascimento</strong>
               <span>
-                {server.nascimento ? new Date(server.nascimento).toLocaleDateString("pt-BR") : "-"}
+                {server.nascimento ? formatDateOnlyPtBR(server.nascimento) : "-"}
               </span>
             </div>
             <div className="detail-item">
               <strong>Início no altar</strong>
               <span>
-                {server.inicio ? new Date(server.inicio).toLocaleDateString("pt-BR") : "-"}
+                {server.inicio ? formatDateOnlyPtBR(server.inicio) : "-"}
               </span>
             </div>
           </details>

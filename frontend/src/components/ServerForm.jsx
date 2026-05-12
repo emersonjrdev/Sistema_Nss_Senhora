@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
+import { toCalendarDateString } from "../utils/dateOnly";
 import { maskPhoneBR, isValidBrPhoneMasked } from "../utils/phoneMask";
 
 const DEFAULT_STATUS = "Ativo";
@@ -36,10 +37,10 @@ export default function ServerForm({ editing, onSaved, toast }) {
       setFormData({
         name: editing.name || "",
         funcao: editing.funcao || "",
-        inicio: editing.inicio ? editing.inicio.split("T")[0] : "",
+        inicio: editing.inicio ? toCalendarDateString(editing.inicio) : "",
         local: editing.local || "",
         telefone: editing.telefone || "",
-        nascimento: editing.nascimento ? editing.nascimento.split("T")[0] : "",
+        nascimento: editing.nascimento ? toCalendarDateString(editing.nascimento) : "",
         comunidade: editing.comunidade || "",
         status: editing.status || DEFAULT_STATUS,
         observacoes: editing.observacoes || "",
@@ -123,7 +124,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
     if (
       formData.nascimento &&
       formData.inicio &&
-      new Date(formData.nascimento) > new Date(formData.inicio)
+      formData.nascimento > formData.inicio
     ) {
       nextErrors.inicio = "Data de início não pode ser antes do nascimento";
     }
@@ -155,14 +156,10 @@ export default function ServerForm({ editing, onSaved, toast }) {
         name: formData.name.trim(),
         photo,
         funcao: formData.funcao.trim() || null,
-        inicio: formData.inicio
-          ? new Date(formData.inicio + "T00:00:00").toISOString().split("T")[0]
-          : null,
+        inicio: formData.inicio ? formData.inicio : null,
         local: formData.local.trim() || null,
         telefone: formData.telefone.trim() || null,
-        nascimento: formData.nascimento
-          ? new Date(formData.nascimento + "T00:00:00").toISOString().split("T")[0]
-          : null,
+        nascimento: formData.nascimento ? formData.nascimento : null,
         comunidade: formData.comunidade.trim() || null,
         status: formData.status || DEFAULT_STATUS,
         observacoes: formData.observacoes.trim() || null,

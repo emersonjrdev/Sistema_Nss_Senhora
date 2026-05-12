@@ -5,6 +5,20 @@ const requireEditor = require("../middleware/requireEditor");
 
 const router = express.Router();
 
+/** Converte YYYY-MM-DD em Date ao meio-dia UTC (evita mudar o dia civil no fuso local). */
+function dayStringToNullableDate(value) {
+  if (value === null) return null;
+  if (value === undefined) return undefined;
+  if (value === "") return null;
+  const s = String(value).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return value;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  return new Date(Date.UTC(y, mo, d, 12, 0, 0, 0));
+}
+
 // Criar usuário → POST /api/user
 router.post("/", requireEditor, async (req, res) => {
   try {
@@ -26,10 +40,10 @@ router.post("/", requireEditor, async (req, res) => {
       name,
       photo,
       funcao,
-      inicio,
+      inicio: dayStringToNullableDate(inicio),
       local,
       telefone,
-      nascimento,
+      nascimento: dayStringToNullableDate(nascimento),
       comunidade,
       status,
       observacoes,
@@ -64,11 +78,17 @@ router.get("/:id", async (req, res) => {
 // Atualizar usuário → PUT /api/user/:id
 router.put("/:id", requireEditor, async (req, res) => {
   try {
-    const updated = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const body = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(body, "inicio")) {
+      body.inicio = dayStringToNullableDate(body.inicio);
+    }
+    if (Object.prototype.hasOwnProperty.call(body, "nascimento")) {
+      body.nascimento = dayStringToNullableDate(body.nascimento);
+    }
+    const updated = await User.findByIdAndUpdate(req.params.id, body, {
+      new: true,
+      runValidators: true,
+    });
     if (!updated) return res.status(404).json({ error: "Not found" });
     res.json(updated);
   } catch (err) {

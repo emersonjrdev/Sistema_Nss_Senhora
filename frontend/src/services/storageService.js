@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { hasApi, apiRequest } from "./apiRequest";
+import { calendarYearMonth } from "../utils/dateOnly";
 
 const STORAGE_KEY = "usuarios_altar";
 
@@ -122,9 +123,7 @@ export const storageService = {
     if (filters.period) {
       result = result.filter((u) => {
         if (!u.inicio) return false;
-        const dt = new Date(u.inicio);
-        const month = String(dt.getMonth() + 1).padStart(2, "0");
-        return `${dt.getFullYear()}-${month}` === filters.period;
+        return calendarYearMonth(u.inicio) === filters.period;
       });
     }
 

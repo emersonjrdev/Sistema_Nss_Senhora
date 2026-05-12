@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatDateOnlyPtBR } from "./dateOnly";
 
 function cell(v) {
   if (v == null) return "";
@@ -8,14 +9,8 @@ function cell(v) {
 
 function fmtDate(v) {
   if (v == null || v === "") return "—";
-  try {
-    const raw = String(v);
-    const d = raw.includes("T") ? new Date(raw) : new Date(raw.slice(0, 10) + "T12:00:00");
-    if (Number.isNaN(d.getTime())) return cell(raw);
-    return d.toLocaleDateString("pt-BR");
-  } catch {
-    return "—";
-  }
+  const s = formatDateOnlyPtBR(v);
+  return s === "-" ? "—" : s;
 }
 
 function triggerBlobDownload(blob, filename) {

@@ -4,6 +4,7 @@ import { storageService } from "../services/storageService";
 import DetailsModal from "./DetailsModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import SearchFilters from "./SearchFilters";
+import { formatDateOnlyPtBR, calendarDateSortKey } from "../utils/dateOnly";
 import StatusBadge from "./StatusBadge";
 import EmptyState from "./EmptyState";
 
@@ -71,9 +72,9 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
         });
       }
       if (sort.key === "inicio") {
-        const da = a.inicio ? new Date(a.inicio).getTime() : 0;
-        const db = b.inicio ? new Date(b.inicio).getTime() : 0;
-        return mult * (da - db);
+        const da = calendarDateSortKey(a.inicio);
+        const db = calendarDateSortKey(b.inicio);
+        return mult * da.localeCompare(db);
       }
       return 0;
     });
@@ -187,7 +188,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                   <td className="nome-cell">{s.name}</td>
                   <td><span className="funcao-badge">{s.funcao || "-"}</span></td>
                   <td><StatusBadge status={s.status} /></td>
-                  <td>{s.inicio ? new Date(s.inicio).toLocaleDateString('pt-BR') : "-"}</td>
+                  <td>{s.inicio ? formatDateOnlyPtBR(s.inicio) : "-"}</td>
                   <td>{s.local || s.comunidade || "-"}</td>
                   <td className="actions">
                     <button 
@@ -258,7 +259,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                 </div>
                 <div>
                   <small>Início</small>
-                  <span>{s.inicio ? new Date(s.inicio).toLocaleDateString("pt-BR") : "-"}</span>
+                  <span>{s.inicio ? formatDateOnlyPtBR(s.inicio) : "-"}</span>
                 </div>
                 <div>
                   <small>Local</small>
