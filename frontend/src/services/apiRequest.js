@@ -1,4 +1,5 @@
 import { authHeaders } from "./authService";
+import { emitEditorAuthRequired } from "./authEvents";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
@@ -20,6 +21,13 @@ export async function apiRequest(path = "", options = {}) {
       msg = j.error || j.message || JSON.stringify(j);
     } catch {
       msg = await res.text();
+    }
+    const combined = `${msg} ${res.status}`;
+    if (
+      res.status === 401 &&
+      /autentica|sess[aã]o|token|editor|login|inv[aá]lid/i.test(combined)
+    ) {
+      emitEditorAuthRequired();
     }
     throw new Error(msg || `HTTP ${res.status}`);
   }

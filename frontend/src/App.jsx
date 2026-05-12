@@ -14,6 +14,7 @@ import { getModuleById } from "./config/modules";
 import { storageService } from "./services/storageService";
 import { useToast } from "./hooks/useToast";
 import EditorAuthBar from "./components/EditorAuthBar";
+import EditorToolbarLogin from "./components/EditorToolbarLogin";
 
 export default function App() {
   const [editing, setEditing] = useState(null);
@@ -108,9 +109,12 @@ export default function App() {
             >
               Menu de módulos
             </button>
-            <div className="app-main-breadcrumb">
-              <span className="muted">Módulo atual</span>
-              <strong>{mod.label}</strong>
+            <div className="app-main-toolbar-end">
+              <EditorToolbarLogin />
+              <div className="app-main-breadcrumb">
+                <span className="muted">Módulo atual</span>
+                <strong>{mod.label}</strong>
+              </div>
             </div>
           </div>
 

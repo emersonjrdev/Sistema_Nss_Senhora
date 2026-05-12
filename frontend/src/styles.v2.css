@@ -1125,6 +1125,25 @@ main {
   gap: 10px;
 }
 
+.app-main-toolbar-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-toolbar-login {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.editor-toolbar-login-btn {
+  flex-shrink: 0;
+}
+
 .app-main-breadcrumb {
   display: flex;
   flex-direction: column;
@@ -1818,16 +1837,29 @@ main {
     gap: 12px;
   }
 
-  .mobile-menu-btn {
+  .app-main-toolbar-end {
+    flex-direction: column;
+    align-items: stretch;
     width: 100%;
-    min-height: 46px;
-    justify-content: center;
-    font-size: 14px;
   }
 
   .app-main-breadcrumb {
     text-align: center;
     width: 100%;
+  }
+
+  .editor-toolbar-login,
+  .editor-toolbar-login-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .mobile-menu-btn {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+    font-size: 14px;
   }
 
   .app-sidebar {
@@ -1995,12 +2027,13 @@ main {
 .editor-auth-bar {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
   margin: 0 0 16px;
   padding: 10px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: var(--surface);
+  border-left: 4px solid var(--primary-600);
+  background: linear-gradient(90deg, var(--primary-100), var(--surface) 48%);
   box-shadow: var(--shadow-sm);
 }
 

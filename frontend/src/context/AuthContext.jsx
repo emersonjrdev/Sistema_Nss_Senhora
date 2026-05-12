@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import * as auth from "../services/authService";
+import { onEditorAuthRequired } from "../services/authEvents";
 import EditorLoginModal from "../components/EditorLoginModal";
 
 const AuthContext = createContext(null);
@@ -19,6 +20,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     auth.fetchAuthStatus().then((s) => {
       setStatus({ checked: true, editorAuthRequired: s.editorAuthRequired });
+    });
+  }, []);
+
+  useEffect(() => {
+    return onEditorAuthRequired(() => {
+      setStatus((prev) => ({ ...prev, checked: true, editorAuthRequired: true }));
+      setLoginOpen(true);
     });
   }, []);
 

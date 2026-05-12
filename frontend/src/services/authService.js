@@ -30,7 +30,8 @@ export async function fetchAuthStatus() {
     const j = await res.json();
     return { editorAuthRequired: Boolean(j.editorAuthRequired), mode: "api" };
   } catch {
-    return { editorAuthRequired: false, mode: "api" };
+    // Rede/CORS: não sabemos o status — assumimos que pode exigir login para não esconder o botão.
+    return { editorAuthRequired: true, mode: "api", statusUnreachable: true };
   }
 }
 
