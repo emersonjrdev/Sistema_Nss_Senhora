@@ -24,7 +24,7 @@ export default function RelatoriosView({ servidores, toast }) {
     if (!servidores.length) return;
     try {
       setExporting(true);
-      await downloadServidoresPdf(servidores);
+      downloadServidoresPdf(servidores);
       toast?.success("PDF gerado e baixado.");
     } catch (err) {
       console.error(err);

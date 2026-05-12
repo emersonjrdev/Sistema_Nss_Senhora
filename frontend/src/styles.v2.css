@@ -74,6 +74,7 @@ main {
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent);
+  pointer-events: none;
 }
 
 .header-content {
@@ -806,6 +807,11 @@ main {
   z-index: 1200;
   display: grid;
   gap: 8px;
+  pointer-events: none;
+}
+
+.toast-container .toast {
+  pointer-events: auto;
 }
 
 .toast {
@@ -1799,6 +1805,13 @@ main {
 
 /* ——— Celular: layout, toques confortáveis e áreas seguras ——— */
 @media (max-width: 640px) {
+  .btn,
+  .sidebar-nav-item,
+  .mobile-menu-btn,
+  .file-input-label {
+    touch-action: manipulation;
+  }
+
   .app-main-toolbar {
     flex-direction: column;
     align-items: stretch;
