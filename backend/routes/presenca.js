@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const PresencaEvento = require("../models/PresencaEvento");
+const requireEditor = require("../middleware/requireEditor");
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.get("/evento/:eventoId", async (req, res) => {
 });
 
 /** PATCH body: { servidorId, status } — status vazio remove */
-router.patch("/evento/:eventoId", async (req, res) => {
+router.patch("/evento/:eventoId", requireEditor, async (req, res) => {
   try {
     const { eventoId } = req.params;
     if (!isOid(eventoId)) return res.status(400).json({ error: "eventoId inválido" });

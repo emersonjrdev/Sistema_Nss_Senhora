@@ -2,11 +2,12 @@ const express = require("express");
 const multer = require("multer");
 const cloudinary = require("../config/cloudinaryConfig");
 const fs = require("fs");
+const requireEditor = require("../middleware/requireEditor");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/", upload.single("file"), async (req, res) => {
+router.post("/", requireEditor, upload.single("file"), async (req, res) => {
   try {
     const result = await cloudinary.uploader.upload(req.file.path);
     fs.unlinkSync(req.file.path); // remove o arquivo temporário

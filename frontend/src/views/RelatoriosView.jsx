@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { downloadServidoresPdf } from "../utils/exportServidoresPdf";
 
 export default function RelatoriosView({ servidores, toast }) {
+  const { canEdit } = useAuth();
   const [exporting, setExporting] = useState(false);
 
   const stats = useMemo(() => {
@@ -21,7 +23,7 @@ export default function RelatoriosView({ servidores, toast }) {
   }, [servidores]);
 
   async function handleExportPdf() {
-    if (!servidores.length) return;
+    if (!servidores.length || !canEdit) return;
     try {
       setExporting(true);
       downloadServidoresPdf(servidores);
@@ -81,12 +83,15 @@ export default function RelatoriosView({ servidores, toast }) {
           type="button"
           className="btn btn-primary"
           onClick={handleExportPdf}
-          disabled={!servidores.length || exporting}
+          disabled={!servidores.length || exporting || !canEdit}
         >
           {exporting ? "Gerando PDF…" : "Exportar PDF"}
         </button>
         {!servidores.length && (
           <span className="muted">Cadastre servidores para habilitar a exportação.</span>
+        )}
+        {servidores.length > 0 && !canEdit && (
+          <span className="muted">Entre como editor para exportar o PDF.</span>
         )}
       </div>
     </section>

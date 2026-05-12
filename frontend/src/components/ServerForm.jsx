@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
 import { maskPhoneBR, isValidBrPhoneMasked } from "../utils/phoneMask";
@@ -13,6 +14,7 @@ function getInitials(name) {
 }
 
 export default function ServerForm({ editing, onSaved, toast }) {
+  const { canEdit } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     funcao: "",
@@ -131,6 +133,10 @@ export default function ServerForm({ editing, onSaved, toast }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!canEdit) {
+      toast?.error("Faça login como editor para salvar alterações.");
+      return;
+    }
 
     if (!validate()) {
       toast?.error("Corrija os campos destacados para continuar");
@@ -183,6 +189,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
 
   return (
     <form onSubmit={handleSubmit} className="form">
+      <fieldset className="server-form-fieldset" disabled={!canEdit}>
       <div className="form-grid">
         <label className={errors.name ? "field-error" : ""}>
           Nome completo *
@@ -365,6 +372,7 @@ export default function ServerForm({ editing, onSaved, toast }) {
           </button>
         )}
       </div>
+      </fieldset>
     </form>
   );
 }

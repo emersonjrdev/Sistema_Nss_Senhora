@@ -1,28 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
+import { hasApi, apiRequest } from "./apiRequest";
 
 const STORAGE_KEY = "usuarios_altar";
-const API_BASE = import.meta.env.VITE_API_URL || "";
-
-async function apiRequest(path = "", options = {}) {
-  if (!API_BASE) throw new Error("NO_API");
-
-  const url = API_BASE.replace(/\/$/, "") + path;
-  const res = await fetch(url, options);
-
-  if (!res.ok) {
-    const txt = await res.text();
-    console.error("Erro da API:", res.status, txt);
-    throw new Error(txt || "API error");
-  }
-
-  return await res.json();
-}
-
 
 export const storageService = {
   // Salvar todos (fallback localStorage)
   async saveUsers(users) {
-    if (API_BASE) {
+    if (hasApi()) {
       return users;
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
@@ -31,7 +15,7 @@ export const storageService = {
 
   // Carregar todos os usuários
   async loadUsers() {
-    if (API_BASE) {
+    if (hasApi()) {
       try {
         return await apiRequest("/api/user");
       } catch (err) {
@@ -47,7 +31,7 @@ export const storageService = {
 
   // Criar usuário
   async createUser(u) {
-    if (API_BASE) {
+    if (hasApi()) {
       return await apiRequest("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,7 +58,7 @@ export const storageService = {
 
   // Atualizar usuário
   async updateUser(id, u) {
-    if (API_BASE) {
+    if (hasApi()) {
       return await apiRequest(`/api/user/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -94,7 +78,7 @@ export const storageService = {
 
   // Deletar usuário
   async deleteUser(id) {
-    if (API_BASE) {
+    if (hasApi()) {
       return await apiRequest(`/api/user/${id}`, { method: "DELETE" });
     } else {
       const users = await this.loadUsers();

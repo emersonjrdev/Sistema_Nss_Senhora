@@ -11,6 +11,8 @@ const eventosRoutes = require('./routes/eventos');
 const escalasRoutes = require('./routes/escalas');
 const presencaRoutes = require('./routes/presenca');
 const historicoRoutes = require('./routes/historico');
+const authRoutes = require('./routes/auth');
+const requireEditor = require('./middleware/requireEditor');
 
 const app = express();
 
@@ -18,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 // mount routes
+app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/servidores', servidoresRoutes);
@@ -26,7 +29,7 @@ app.use('/api/escalas', escalasRoutes);
 app.use('/api/presenca', presencaRoutes);
 app.use('/api/historico', historicoRoutes);
 
-app.get("/api/test-insert", async (req, res) => {
+app.get("/api/test-insert", requireEditor, async (req, res) => {
   try {
     const User = mongoose.model("User");
     const doc = await User.create({

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../context/AuthContext";
 import { historicoService } from "../services/historicoService";
 
 function serverId(s) {
@@ -6,6 +7,7 @@ function serverId(s) {
 }
 
 export default function HistoricoView({ servidores, toast }) {
+  const { canEdit } = useAuth();
   const [servidorId, setServidorId] = useState("");
   const [entries, setEntries] = useState([]);
   const [form, setForm] = useState({ data: new Date().toISOString().split("T")[0], texto: "" });
@@ -31,6 +33,10 @@ export default function HistoricoView({ servidores, toast }) {
 
   async function handleAdd(e) {
     e.preventDefault();
+    if (!canEdit) {
+      toast?.error("Faça login como editor para gravar no histórico.");
+      return;
+    }
     try {
       await historicoService.add(servidorId, form.texto, form.data);
       toast?.success("Registro adicionado ao histórico.");
@@ -42,6 +48,10 @@ export default function HistoricoView({ servidores, toast }) {
   }
 
   async function handleRemove(entryId) {
+    if (!canEdit) {
+      toast?.error("Faça login como editor para remover.");
+      return;
+    }
     if (!window.confirm("Remover este registro?")) return;
     try {
       await historicoService.remove(servidorId, entryId);
@@ -87,25 +97,27 @@ export default function HistoricoView({ servidores, toast }) {
               ))}
             </select>
           </label>
-          <label>
-            Data
-            <input type="date" value={form.data} onChange={(e) => setForm((f) => ({ ...f, data: e.target.value }))} />
-          </label>
-          <label className="full-width">
-            Texto *
-            <textarea
-              required
-              rows={4}
-              value={form.texto}
-              onChange={(e) => setForm((f) => ({ ...f, texto: e.target.value }))}
-              placeholder="Ex: Participou da formação de acólitos; disponível aos domingos."
-            />
-          </label>
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
-              Salvar no histórico
-            </button>
-          </div>
+          <fieldset className="module-fieldset" disabled={!canEdit}>
+            <label>
+              Data
+              <input type="date" value={form.data} onChange={(e) => setForm((f) => ({ ...f, data: e.target.value }))} />
+            </label>
+            <label className="full-width">
+              Texto *
+              <textarea
+                required
+                rows={4}
+                value={form.texto}
+                onChange={(e) => setForm((f) => ({ ...f, texto: e.target.value }))}
+                placeholder="Ex: Participou da formação de acólitos; disponível aos domingos."
+              />
+            </label>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">
+                Salvar no histórico
+              </button>
+            </div>
+          </fieldset>
         </form>
 
         <div className="card list-card-inner">
@@ -122,7 +134,12 @@ export default function HistoricoView({ servidores, toast }) {
                         ? new Date(row.data + "T12:00:00").toLocaleDateString("pt-BR")
                         : "-"}
                     </time>
-                    <button type="button" className="btn-remove-link" onClick={() => handleRemove(row.id)}>
+                    <button
+                      type="button"
+                      className="btn-remove-link"
+                      onClick={() => handleRemove(row.id)}
+                      disabled={!canEdit}
+                    >
                       Remover
                     </button>
                   </div>

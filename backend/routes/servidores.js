@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Servidor = require('../models/Servidor');
+const requireEditor = require('../middleware/requireEditor');
 
 // List all
 router.get('/', async (req, res) => {
@@ -24,7 +25,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create
-router.post('/', async (req, res) => {
+router.post('/', requireEditor, async (req, res) => {
   try {
     const { nome, funcao, inicio, local, imagem } = req.body;
     const newS = await Servidor.create({ nome, funcao, inicio, local, imagem });
@@ -35,7 +36,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireEditor, async (req, res) => {
   try {
     const updated = await Servidor.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
@@ -45,7 +46,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireEditor, async (req, res) => {
   try {
     await Servidor.findByIdAndDelete(req.params.id);
     res.json({ message: 'Deleted' });

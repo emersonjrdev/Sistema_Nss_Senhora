@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useAuth } from "../context/AuthContext";
 import { eventosService } from "../services/eventosService";
 import { presencaService } from "../services/presencaService";
 
@@ -15,6 +16,7 @@ function serverId(s) {
 }
 
 export default function EventosView({ toast, servidores = [] }) {
+  const { canEdit } = useAuth();
   const [lista, setLista] = useState([]);
   const [presencaPorEvento, setPresencaPorEvento] = useState({});
   const [form, setForm] = useState({
@@ -76,6 +78,10 @@ export default function EventosView({ toast, servidores = [] }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!canEdit) {
+      toast?.error("Faça login como editor para cadastrar eventos.");
+      return;
+    }
     try {
       await eventosService.create(form);
       toast?.success("Evento cadastrado.");
@@ -87,6 +93,10 @@ export default function EventosView({ toast, servidores = [] }) {
   }
 
   async function handleRemove(id) {
+    if (!canEdit) {
+      toast?.error("Faça login como editor para excluir.");
+      return;
+    }
     if (!window.confirm("Remover este evento?")) return;
     try {
       await eventosService.remove(id);
@@ -109,6 +119,7 @@ export default function EventosView({ toast, servidores = [] }) {
 
       <div className="module-two-col">
         <form className="card form-card-inner form" onSubmit={handleSubmit}>
+          <fieldset className="module-fieldset" disabled={!canEdit}>
           <h3 className="module-subtitle">Novo evento</h3>
           <label>
             Título *
@@ -170,6 +181,7 @@ export default function EventosView({ toast, servidores = [] }) {
               Salvar evento
             </button>
           </div>
+          </fieldset>
         </form>
 
         <div className="card list-card-inner">
@@ -216,7 +228,12 @@ export default function EventosView({ toast, servidores = [] }) {
                       )}
                     </div>
                     <div className="eventos-item-actions">
-                      <button type="button" className="btn small danger" onClick={() => handleRemove(ev.id)}>
+                      <button
+                        type="button"
+                        className="btn small danger"
+                        onClick={() => handleRemove(ev.id)}
+                        disabled={!canEdit}
+                      >
                         Excluir
                       </button>
                     </div>

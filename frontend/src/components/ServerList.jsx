@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useAuth } from "../context/AuthContext";
 import { storageService } from "../services/storageService";
 import DetailsModal from "./DetailsModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
@@ -15,6 +16,7 @@ function getAvatarFallback(name) {
 }
 
 export default function ServerList({ onEdit, refreshTrigger, toast }) {
+  const { canEdit } = useAuth();
   const [servidores, setServidores] = useState([]);
   const [filters, setFilters] = useState({
     name: "",
@@ -97,6 +99,10 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
   );
 
   function handleDeleteClick(id, name) {
+    if (!canEdit) {
+      toast?.error("Faça login como editor para excluir.");
+      return;
+    }
     setDeletingId({ id, name });
   }
 
@@ -200,6 +206,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                       className="btn small" 
                       title="Editar cadastro do servidor"
                       aria-label="Editar servidor"
+                      disabled={!canEdit}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -211,6 +218,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                       className="btn small danger" 
                       title="Excluir servidor"
                       aria-label="Excluir servidor"
+                      disabled={!canEdit}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -276,6 +284,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                   className="btn small"
                   title="Editar cadastro do servidor"
                   aria-label="Editar servidor"
+                  disabled={!canEdit}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -288,6 +297,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                   className="btn small danger"
                   title="Excluir servidor"
                   aria-label="Excluir servidor"
+                  disabled={!canEdit}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="3 6 5 6 21 6"></polyline>

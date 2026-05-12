@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Escala = require("../models/Escala");
+const requireEditor = require("../middleware/requireEditor");
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireEditor, async (req, res) => {
   try {
     const { titulo, data, observacoes, atribuicoes, eventoId } = req.body;
     if (!titulo || !data) {
@@ -49,7 +50,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireEditor, async (req, res) => {
   try {
     const { id } = req.params;
     if (!isOid(id)) return res.status(400).json({ error: "ID inválido" });
@@ -78,7 +79,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireEditor, async (req, res) => {
   try {
     const { id } = req.params;
     if (!isOid(id)) return res.status(400).json({ error: "ID inválido" });

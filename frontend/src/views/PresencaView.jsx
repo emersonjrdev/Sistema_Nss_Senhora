@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import { eventosService } from "../services/eventosService";
 import { escalasService } from "../services/escalasService";
 import { presencaService } from "../services/presencaService";
@@ -8,6 +9,7 @@ function serverId(s) {
 }
 
 export default function PresencaView({ servidores }) {
+  const { canEdit } = useAuth();
   const [eventos, setEventos] = useState([]);
   const [escalas, setEscalas] = useState([]);
   const [eventoId, setEventoId] = useState("");
@@ -53,6 +55,7 @@ export default function PresencaView({ servidores }) {
   }, [servidores, escalaDoDia]);
 
   async function setStatus(servidorId, status) {
+    if (!canEdit) return;
     if (!eventoId) return;
     const current = mapa[servidorId];
     const next = current === status ? "" : status;
@@ -130,6 +133,7 @@ export default function PresencaView({ servidores }) {
                     type="button"
                     className={`btn small ${st === "presente" ? "" : "secondary"}`}
                     onClick={() => setStatus(sid, "presente")}
+                    disabled={!canEdit}
                   >
                     Presente
                   </button>
@@ -137,6 +141,7 @@ export default function PresencaView({ servidores }) {
                     type="button"
                     className={`btn small ${st === "ausente" ? "danger" : "secondary"}`}
                     onClick={() => setStatus(sid, "ausente")}
+                    disabled={!canEdit}
                   >
                     Ausente
                   </button>
@@ -144,6 +149,7 @@ export default function PresencaView({ servidores }) {
                     type="button"
                     className={`btn small ${st === "justificado" ? "info" : "secondary"}`}
                     onClick={() => setStatus(sid, "justificado")}
+                    disabled={!canEdit}
                   >
                     Justificado
                   </button>

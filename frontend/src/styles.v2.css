@@ -1990,3 +1990,59 @@ main {
     padding: 2px 5px;
   }
 }
+
+/* Barra de autenticação do editor + formulários em modo leitura */
+.editor-auth-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: 0 0 16px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.editor-auth-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.editor-auth-bar-inner .btn.small {
+  min-height: 36px;
+}
+
+.editor-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.editor-login-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.server-form-fieldset,
+.module-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.module-fieldset:disabled {
+  opacity: 0.72;
+}
+
+.server-form-fieldset:disabled {
+  opacity: 0.72;
+}

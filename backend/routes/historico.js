@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const HistoricoEntrada = require("../models/HistoricoEntrada");
+const requireEditor = require("../middleware/requireEditor");
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireEditor, async (req, res) => {
   try {
     const { servidorId, data, texto } = req.body;
     if (!servidorId || !isOid(String(servidorId))) {
@@ -58,7 +59,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireEditor, async (req, res) => {
   try {
     const { id } = req.params;
     if (!isOid(id)) return res.status(400).json({ error: "ID inválido" });

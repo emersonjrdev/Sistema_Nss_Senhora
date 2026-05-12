@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useAuth } from "../context/AuthContext";
 import { escalasService } from "../services/escalasService";
 import { eventosService } from "../services/eventosService";
 
@@ -7,6 +8,7 @@ function serverId(s) {
 }
 
 export default function EscalasView({ servidores, toast }) {
+  const { canEdit } = useAuth();
   const [lista, setLista] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [form, setForm] = useState({ eventoId: "", titulo: "", data: "", observacoes: "" });
@@ -52,6 +54,10 @@ export default function EscalasView({ servidores, toast }) {
 
   async function handleCreate(e) {
     e.preventDefault();
+    if (!canEdit) {
+      toast?.error("Faça login como editor para criar escalas.");
+      return;
+    }
     try {
       await escalasService.create({
         titulo: form.titulo,
@@ -69,6 +75,10 @@ export default function EscalasView({ servidores, toast }) {
   }
 
   async function toggleServidor(servidor, checked) {
+    if (!canEdit) {
+      toast?.error("Faça login como editor para alterar a equipe.");
+      return;
+    }
     if (!editingId) return;
     const escala = lista.find((x) => x.id === editingId);
     if (!escala) return;
@@ -99,6 +109,10 @@ export default function EscalasView({ servidores, toast }) {
   }
 
   async function handleRemoveEscala(id) {
+    if (!canEdit) {
+      toast?.error("Faça login como editor para excluir.");
+      return;
+    }
     if (!window.confirm("Excluir esta escala?")) return;
     try {
       await escalasService.remove(id);
@@ -122,6 +136,7 @@ export default function EscalasView({ servidores, toast }) {
 
       <div className="module-two-col">
         <form className="card form-card-inner form" onSubmit={handleCreate}>
+          <fieldset className="module-fieldset" disabled={!canEdit}>
           <h3 className="module-subtitle">Nova escala</h3>
           {eventos.length > 0 && (
             <label>
@@ -184,6 +199,7 @@ export default function EscalasView({ servidores, toast }) {
               Criar escala
             </button>
           </div>
+          </fieldset>
         </form>
 
         <div className="card list-card-inner">
@@ -214,7 +230,12 @@ export default function EscalasView({ servidores, toast }) {
                       <button type="button" className="btn small" onClick={() => setEditingId(es.id === editingId ? null : es.id)}>
                         {editingId === es.id ? "Fechar" : "Montar equipe"}
                       </button>
-                      <button type="button" className="btn small danger" onClick={() => handleRemoveEscala(es.id)}>
+                      <button
+                        type="button"
+                        className="btn small danger"
+                        onClick={() => handleRemoveEscala(es.id)}
+                        disabled={!canEdit}
+                      >
                         Excluir
                       </button>
                     </div>
@@ -240,6 +261,7 @@ export default function EscalasView({ servidores, toast }) {
                       type="checkbox"
                       checked={isOnEscala(s)}
                       onChange={(e) => toggleServidor(s, e.target.checked)}
+                      disabled={!canEdit}
                     />
                     <span>{s.name}</span>
                     {s.funcao && <span className="funcao-badge">{s.funcao}</span>}

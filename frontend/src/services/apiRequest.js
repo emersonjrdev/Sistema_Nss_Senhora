@@ -1,3 +1,5 @@
+import { authHeaders } from "./authService";
+
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
 export function hasApi() {
@@ -8,7 +10,8 @@ export async function apiRequest(path = "", options = {}) {
   if (!API_BASE) throw new Error("NO_API");
 
   const url = API_BASE.replace(/\/$/, "") + path;
-  const res = await fetch(url, options);
+  const mergedHeaders = { ...authHeaders(), ...(options.headers || {}) };
+  const res = await fetch(url, { ...options, headers: mergedHeaders });
 
   if (!res.ok) {
     let msg = "";

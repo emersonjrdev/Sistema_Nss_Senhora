@@ -13,6 +13,7 @@ import HistoricoView from "./views/HistoricoView";
 import { getModuleById } from "./config/modules";
 import { storageService } from "./services/storageService";
 import { useToast } from "./hooks/useToast";
+import EditorAuthBar from "./components/EditorAuthBar";
 
 export default function App() {
   const [editing, setEditing] = useState(null);
@@ -84,6 +85,7 @@ export default function App() {
   return (
     <div className="container app-root">
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
+      <EditorAuthBar />
 
       <HeaderInstitucional />
 

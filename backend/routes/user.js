@@ -1,11 +1,12 @@
 // routes/user.js
 const express = require("express");
 const User = require("../models/User");
+const requireEditor = require("../middleware/requireEditor");
 
 const router = express.Router();
 
 // Criar usuário → POST /api/user
-router.post("/", async (req, res) => {
+router.post("/", requireEditor, async (req, res) => {
   try {
     const {
       name,
@@ -61,7 +62,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Atualizar usuário → PUT /api/user/:id
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireEditor, async (req, res) => {
   try {
     const updated = await User.findByIdAndUpdate(
       req.params.id,
@@ -76,7 +77,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Deletar usuário → DELETE /api/user/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireEditor, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "Deleted" });
