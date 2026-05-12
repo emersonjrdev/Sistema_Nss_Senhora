@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import * as auth from "../services/authService";
@@ -16,10 +17,16 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState({ checked: false, editorAuthRequired: false });
   const [tick, setTick] = useState(0);
   const [loginOpen, setLoginOpen] = useState(false);
+  const initialLoginPrompted = useRef(false);
 
   useEffect(() => {
     auth.fetchAuthStatus().then((s) => {
       setStatus({ checked: true, editorAuthRequired: s.editorAuthRequired });
+      const precisaSenha = s.editorAuthRequired && !auth.canEditNow(s.editorAuthRequired);
+      if (precisaSenha && !initialLoginPrompted.current) {
+        initialLoginPrompted.current = true;
+        setLoginOpen(true);
+      }
     });
   }, []);
 

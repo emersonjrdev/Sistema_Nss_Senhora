@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function EditorLoginModal() {
@@ -12,7 +13,13 @@ export default function EditorLoginModal() {
       setPwd("");
       setErr("");
       setLoading(false);
+      return;
     }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
   }, [loginOpen]);
 
   if (!loginOpen) return null;
@@ -30,12 +37,23 @@ export default function EditorLoginModal() {
     }
   }
 
-  return (
-    <div className="modal-backdrop" role="presentation" onClick={() => !loading && closeLogin()}>
-      <div className="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="editor-login-title" onClick={(ev) => ev.stopPropagation()}>
-        <h3 id="editor-login-title">Entrar como editor</h3>
+  return createPortal(
+    <div
+      className="modal-backdrop editor-login-modal-backdrop"
+      role="presentation"
+      onClick={() => !loading && closeLogin()}
+    >
+      <div
+        className="modal confirm-modal editor-login-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="editor-login-title"
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <h3 id="editor-login-title">Acesso de edição</h3>
         <p className="confirm-message">
-          Informe a senha de administrador para criar, alterar ou excluir registros na API.
+          Esta instância exige a <strong>senha de administrador</strong> para incluir ou alterar dados. Digite abaixo
+          para continuar, ou use <strong>Cancelar</strong> para apenas consultar em modo leitura.
         </p>
         <form onSubmit={onSubmit} className="editor-login-form">
           <label className="full-width">
@@ -60,6 +78,7 @@ export default function EditorLoginModal() {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
