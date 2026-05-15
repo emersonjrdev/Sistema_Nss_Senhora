@@ -13,7 +13,13 @@ import { entityId } from "../utils/servidorSelfVerify";
 
 const ITEMS_PER_PAGE = 8;
 
-export default function ServerList({ onEdit, refreshTrigger, toast, selfServidorId = null }) {
+export default function ServerList({
+  onEdit,
+  refreshTrigger,
+  toast,
+  selfServidorId = null,
+  onOpenSelfEditModal,
+}) {
   const { canEdit } = useAuth();
   const [servidores, setServidores] = useState([]);
   const [filters, setFilters] = useState({
@@ -120,6 +126,21 @@ export default function ServerList({ onEdit, refreshTrigger, toast, selfServidor
     }
   }
 
+  const tryEditRow = useCallback(
+    (s) => {
+      const rowId = entityId(s);
+      const pode = canEdit || (selfServidorId && rowId === String(selfServidorId));
+      if (pode) {
+        onEdit?.(s);
+        return;
+      }
+      if (!canEdit) {
+        onOpenSelfEditModal?.();
+      }
+    },
+    [canEdit, selfServidorId, onEdit, onOpenSelfEditModal]
+  );
+
   function handleFilterChange(field, value) {
     setFilters((prev) => ({ ...prev, [field]: value }));
   }
@@ -210,12 +231,16 @@ export default function ServerList({ onEdit, refreshTrigger, toast, selfServidor
                         <circle cx="12" cy="12" r="3"></circle>
                       </svg>
                     </button>
-                    <button 
-                      onClick={() => onEdit && onEdit(s)} 
-                      className="btn small" 
-                      title="Editar cadastro do servidor"
+                    <button
+                      type="button"
+                      onClick={() => tryEditRow(s)}
+                      className={`btn small${!canEdit && !podeEditar ? " btn-guest-edit" : ""}`}
+                      title={
+                        !canEdit && !podeEditar
+                          ? "Abrir confirmação para editar o seu cadastro"
+                          : "Editar cadastro do servidor"
+                      }
                       aria-label="Editar servidor"
-                      disabled={!podeEditar}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -301,11 +326,15 @@ export default function ServerList({ onEdit, refreshTrigger, toast, selfServidor
                   Ver
                 </button>
                 <button
-                  onClick={() => onEdit && onEdit(s)}
-                  className="btn small"
-                  title="Editar cadastro do servidor"
+                  type="button"
+                  onClick={() => tryEditRow(s)}
+                  className={`btn small${!canEdit && !podeEditar ? " btn-guest-edit" : ""}`}
+                  title={
+                    !canEdit && !podeEditar
+                      ? "Abrir confirmação para editar o seu cadastro"
+                      : "Editar cadastro do servidor"
+                  }
                   aria-label="Editar servidor"
-                  disabled={!podeEditar}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

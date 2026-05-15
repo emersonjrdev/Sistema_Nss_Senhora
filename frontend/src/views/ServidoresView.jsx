@@ -154,6 +154,7 @@ export default function ServidoresView({
             refreshTrigger={refreshTrigger}
             toast={toast}
             selfServidorId={selfEditCtx?.servidorId ?? null}
+            onOpenSelfEditModal={() => setSelfModalOpen(true)}
           />
         </div>
       </div>

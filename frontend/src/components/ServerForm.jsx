@@ -372,9 +372,10 @@ export default function ServerForm({ editing, onSaved, onCancel, toast, selfEdit
           </div>
         </div>
       </label>
+      </fieldset>
 
       <div className="form-actions">
-        <button type="submit" className="btn btn-primary" disabled={uploading}>
+        <button type="submit" className="btn btn-primary" disabled={uploading || !formEnabled}>
           {uploading ? (
             <>
               <span className="spinner"></span>
@@ -401,13 +402,12 @@ export default function ServerForm({ editing, onSaved, onCancel, toast, selfEdit
             type="button"
             className="btn secondary"
             onClick={handleLimparCampos}
-            disabled={uploading}
+            disabled={uploading || !formEnabled}
           >
             Limpar
           </button>
         )}
       </div>
-      </fieldset>
     </form>
   );
 }

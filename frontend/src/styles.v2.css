@@ -462,6 +462,11 @@ main {
   box-shadow: none;
 }
 
+.btn.btn-guest-edit {
+  cursor: pointer;
+  opacity: 0.92;
+}
+
 .btn-remove-link {
   margin-top: 8px;
   border: none;
