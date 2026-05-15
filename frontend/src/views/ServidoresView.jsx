@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import DashboardCards from "../components/DashboardCards";
 import ServerForm from "../components/ServerForm";
 import ServerList from "../components/ServerList";
+import ServidorSelfUnlockModal from "../components/ServidorSelfUnlockModal";
 import { useAuth } from "../context/AuthContext";
 
 export default function ServidoresView({
@@ -16,11 +17,18 @@ export default function ServidoresView({
 }) {
   const { canEdit } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
+  const [selfModalOpen, setSelfModalOpen] = useState(false);
+  /** Sessão de edição própria: mantida após verificar até salvar ou "Sair". */
+  const [selfEditCtx, setSelfEditCtx] = useState(null);
 
   const closeForm = useCallback(() => {
     setFormOpen(false);
     onCancelForm?.();
   }, [onCancelForm]);
+
+  useEffect(() => {
+    if (canEdit) setSelfEditCtx(null);
+  }, [canEdit]);
 
   const openCreate = useCallback(() => {
     if (!canEdit) {
@@ -33,8 +41,31 @@ export default function ServidoresView({
 
   const handleSavedAndClose = useCallback(() => {
     setFormOpen(false);
+    setSelfEditCtx(null);
     onSaved?.();
   }, [onSaved]);
+
+  const handleEditServidor = useCallback(
+    (s) => {
+      if (canEdit) {
+        onEdit(s);
+        return;
+      }
+      if (selfEditCtx && String(selfEditCtx.servidorId) === String(s._id || s.id)) {
+        onEdit(s);
+        setFormOpen(true);
+        return;
+      }
+      toast?.info('Para editar seu cadastro, use o botão "Atualizar meu cadastro" e confirme telefone ou data de nascimento.');
+    },
+    [canEdit, onEdit, selfEditCtx, toast]
+  );
+
+  const exitSelfEditMode = useCallback(() => {
+    setSelfEditCtx(null);
+    setFormOpen(false);
+    onCancelForm?.();
+  }, [onCancelForm]);
 
   useEffect(() => {
     if (editing) setFormOpen(true);
@@ -58,7 +89,12 @@ export default function ServidoresView({
     return () => window.removeEventListener("keydown", onKey);
   }, [formOpen, closeForm]);
 
-  const drawerTitle = editing ? "Editar servidor" : "Novo servidor";
+  const isSelfDrawer =
+    Boolean(selfEditCtx) &&
+    editing &&
+    String(editing._id || editing.id) === String(selfEditCtx.servidorId);
+
+  const drawerTitle = isSelfDrawer ? "Meu cadastro" : editing ? "Editar servidor" : "Novo servidor";
 
   return (
     <>
@@ -70,22 +106,67 @@ export default function ServidoresView({
             <div className="servidores-list-head-text">
               <h3>Servidores do altar</h3>
               <p className="servidores-list-sub muted">
-                Consulte, filtre e abra detalhes. Use o botão ao lado para incluir ou alterar cadastros.
+                {canEdit
+                  ? "Consulte, filtre e abra detalhes. Use o botão ao lado para incluir ou alterar cadastros."
+                  : "Consulte e filtre os cadastros. Para alterar o seu, use “Atualizar meu cadastro” e confirme com o telefone ou a data de nascimento já registrados."}
               </p>
             </div>
             <div className="servidores-list-head-actions">
               <span className="badge" aria-live="polite">
                 {servidores.length} {servidores.length === 1 ? "servidor" : "servidores"}
               </span>
+              {!canEdit && (
+                <button
+                  type="button"
+                  className="btn secondary servidores-btn-self"
+                  onClick={() => setSelfModalOpen(true)}
+                >
+                  Atualizar meu cadastro
+                </button>
+              )}
+              {canEdit && (
               <button type="button" className="btn btn-primary servidores-btn-novo" onClick={openCreate}>
                 Novo servidor
               </button>
+              )}
             </div>
           </header>
 
-          <ServerList onEdit={onEdit} refreshTrigger={refreshTrigger} toast={toast} />
+          {!canEdit && selfEditCtx && (
+            <div className="servidor-self-session-bar" role="status">
+              <span>
+                Edição do <strong>seu cadastro</strong> liberada neste aparelho. O nome não pode ser alterado; não é
+                possível excluir o cadastro por aqui.
+              </span>
+              <button type="button" className="btn secondary small" onClick={exitSelfEditMode}>
+                Sair do meu cadastro
+              </button>
+            </div>
+          )}
+
+          <ServerList
+            onEdit={handleEditServidor}
+            refreshTrigger={refreshTrigger}
+            toast={toast}
+            selfServidorId={selfEditCtx?.servidorId ?? null}
+          />
         </div>
       </div>
+
+      <ServidorSelfUnlockModal
+        open={selfModalOpen}
+        onClose={() => setSelfModalOpen(false)}
+        servidores={servidores}
+        toast={toast}
+        onUnlocked={(unlock) => {
+          const srv = servidores.find((s) => String(s._id || s.id) === unlock.servidorId);
+          if (!srv) return;
+          setSelfEditCtx(unlock);
+          onEdit(srv);
+          setFormOpen(true);
+          setSelfModalOpen(false);
+        }}
+      />
 
       {formOpen &&
         createPortal(
@@ -106,15 +187,30 @@ export default function ServidoresView({
                 <div>
                   <h3 id="servidores-form-drawer-title">{drawerTitle}</h3>
                   <p className="muted servidores-form-drawer-sub">
-                    {editing ? "Atualize os dados e salve." : "Preencha os dados obrigatórios e cadastre."}
+                    {isSelfDrawer
+                      ? "Atualize seus dados e salve. A foto é opcional."
+                      : editing
+                        ? "Atualize os dados e salve."
+                        : "Preencha os dados obrigatórios e cadastre."}
                   </p>
                 </div>
-                <button type="button" className="servidores-form-drawer-close" onClick={closeForm} aria-label="Fechar formulário">
+                <button
+                  type="button"
+                  className="servidores-form-drawer-close"
+                  onClick={closeForm}
+                  aria-label="Fechar formulário"
+                >
                   <span aria-hidden="true">×</span>
                 </button>
               </div>
               <div className="servidores-form-drawer-body">
-                <ServerForm editing={editing} onSaved={handleSavedAndClose} onCancel={closeForm} toast={toast} />
+                <ServerForm
+                  editing={editing}
+                  onSaved={handleSavedAndClose}
+                  onCancel={closeForm}
+                  toast={toast}
+                  selfEditVerification={isSelfDrawer ? selfEditCtx : null}
+                />
               </div>
             </aside>
           </>,

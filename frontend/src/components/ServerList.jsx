@@ -12,7 +12,7 @@ import EmptyState from "./EmptyState";
 
 const ITEMS_PER_PAGE = 8;
 
-export default function ServerList({ onEdit, refreshTrigger, toast }) {
+export default function ServerList({ onEdit, refreshTrigger, toast, selfServidorId = null }) {
   const { canEdit } = useAuth();
   const [servidores, setServidores] = useState([]);
   const [filters, setFilters] = useState({
@@ -144,7 +144,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
             <p>Carregando servidores...</p>
           </div>
         ) : sortedServers.length === 0 ? (
-          <EmptyState />
+          <EmptyState canEdit={canEdit} />
         ) : (
           <table className="table">
             <thead>
@@ -171,7 +171,10 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
               </tr>
             </thead>
             <tbody>
-              {paginatedServers.map((s) => (
+              {paginatedServers.map((s) => {
+                const rowId = String(s._id || s.id);
+                const podeEditar = canEdit || (selfServidorId && rowId === String(selfServidorId));
+                return (
                 <tr key={s._id || s.id} className="server-row">
                   <td>
                     <ServerAvatar
@@ -211,28 +214,30 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                       className="btn small" 
                       title="Editar cadastro do servidor"
                       aria-label="Editar servidor"
-                      disabled={!canEdit}
+                      disabled={!podeEditar}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                       </svg>
                     </button>
+                    {canEdit && (
                     <button 
                       onClick={() => handleDeleteClick(s._id || s.id, s.name)} 
                       className="btn small danger" 
                       title="Excluir servidor"
                       aria-label="Excluir servidor"
-                      disabled={!canEdit}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                       </svg>
                     </button>
+                    )}
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         )}
@@ -240,7 +245,10 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
 
       {!loading && sortedServers.length > 0 && (
         <div className="mobile-cards-list">
-          {paginatedServers.map((s) => (
+          {paginatedServers.map((s) => {
+            const rowId = String(s._id || s.id);
+            const podeEditar = canEdit || (selfServidorId && rowId === String(selfServidorId));
+            return (
             <article key={`mobile-${s._id || s.id}`} className="server-mobile-card">
               <div className="server-mobile-header">
                 <ServerAvatar
@@ -296,7 +304,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                   className="btn small"
                   title="Editar cadastro do servidor"
                   aria-label="Editar servidor"
-                  disabled={!canEdit}
+                  disabled={!podeEditar}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -304,12 +312,12 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                   </svg>
                   Editar
                 </button>
+                {canEdit && (
                 <button
                   onClick={() => handleDeleteClick(s._id || s.id, s.name)}
                   className="btn small danger"
                   title="Excluir servidor"
                   aria-label="Excluir servidor"
-                  disabled={!canEdit}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
@@ -317,9 +325,11 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
                   </svg>
                   Excluir
                 </button>
+                )}
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
 

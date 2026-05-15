@@ -10,9 +10,13 @@ export function hasApi() {
 export async function apiRequest(path = "", options = {}) {
   if (!API_BASE) throw new Error("NO_API");
 
+  const { skipAuth, ...fetchOptions } = options;
   const url = API_BASE.replace(/\/$/, "") + path;
-  const mergedHeaders = { ...authHeaders(), ...(options.headers || {}) };
-  const res = await fetch(url, { ...options, headers: mergedHeaders });
+  const mergedHeaders = {
+    ...(skipAuth ? {} : authHeaders()),
+    ...(fetchOptions.headers || {}),
+  };
+  const res = await fetch(url, { ...fetchOptions, headers: mergedHeaders });
 
   if (!res.ok) {
     let msg = "";

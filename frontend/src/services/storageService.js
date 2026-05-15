@@ -1,8 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
 import { hasApi, apiRequest } from "./apiRequest";
 import { calendarYearMonth } from "../utils/dateOnly";
+import { verifyServidorIdentity } from "../utils/servidorSelfVerify";
 
 const STORAGE_KEY = "usuarios_altar";
+
+function userIndexById(users, id) {
+  const sid = String(id);
+  return users.findIndex((x) => String(x._id || x.id) === sid);
+}
 
 export const storageService = {
   // Salvar todos (fallback localStorage)
@@ -57,33 +63,90 @@ export const storageService = {
     }
   },
 
-  // Atualizar usuário
-  async updateUser(id, u) {
+  /**
+   * @param {string} id
+   * @param {object} u
+   * @param {{ selfEdit?: boolean, telefoneUltimos4?: string, verificacaoNascimento?: string }} [opts]
+   */
+  async updateUser(id, u, opts = {}) {
+    const sid = String(id);
+    const hasPhoneCode =
+      opts?.telefoneUltimos4 != null &&
+      String(opts.telefoneUltimos4).replace(/\D/g, "").length >= 4;
+    const hasBirth = opts?.verificacaoNascimento != null && String(opts.verificacaoNascimento).trim() !== "";
+    const selfPayload = Boolean(opts?.selfEdit && (hasPhoneCode || hasBirth));
+
     if (hasApi()) {
-      return await apiRequest(`/api/user/${id}`, {
+      if (selfPayload) {
+        return await apiRequest(`/api/user/self-service/${encodeURIComponent(sid)}`, {
+          method: "PUT",
+          skipAuth: true,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...u,
+            telefoneUltimos4: opts.telefoneUltimos4,
+            verificacaoNascimento: opts.verificacaoNascimento,
+          }),
+        });
+      }
+      return await apiRequest(`/api/user/${encodeURIComponent(sid)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(u),
       });
-    } else {
-      const users = await this.loadUsers();
-      const idx = users.findIndex((x) => x.id === id);
-      if (idx !== -1) {
-        users[idx] = { ...users[idx], ...u };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-        return users[idx];
-      }
-      throw new Error("Usuário não encontrado");
     }
+    const users = await this.loadUsers();
+    const idx = userIndexById(users, sid);
+    if (idx === -1) throw new Error("Usuário não encontrado");
+    if (opts?.selfEdit) {
+      if (
+        !verifyServidorIdentity(users[idx], {
+          telefoneUltimos4: opts.telefoneUltimos4,
+          verificacaoNascimento: opts.verificacaoNascimento,
+        })
+      ) {
+        throw new Error("Telefone ou data de nascimento não conferem com o cadastro.");
+      }
+      const base = users[idx];
+      const { name: _dropName, _id, id: _id2, ...rest } = u;
+      users[idx] = { ...base, ...rest, name: base.name };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+      return users[idx];
+    }
+    users[idx] = { ...users[idx], ...u };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    return users[idx];
+  },
+
+  /** Confirma últimos 4 dígitos do telefone ou data de nascimento (sem token de editor). */
+  async verifySelfUnlock(id, verification) {
+    const sid = String(id);
+    if (hasApi()) {
+      await apiRequest(`/api/user/self-verify/${encodeURIComponent(sid)}`, {
+        method: "POST",
+        skipAuth: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(verification),
+      });
+      return true;
+    }
+    const users = await this.loadUsers();
+    const idx = userIndexById(users, sid);
+    if (idx === -1) throw new Error("Cadastro não encontrado.");
+    if (!verifyServidorIdentity(users[idx], verification)) {
+      throw new Error("Telefone ou data de nascimento não conferem com o cadastro.");
+    }
+    return true;
   },
 
   // Deletar usuário
   async deleteUser(id) {
     if (hasApi()) {
-      return await apiRequest(`/api/user/${id}`, { method: "DELETE" });
+      return await apiRequest(`/api/user/${encodeURIComponent(sid)}`, { method: "DELETE" });
     } else {
       const users = await this.loadUsers();
-      const filtered = users.filter((u) => u.id !== id);
+      const sid = String(id);
+      const filtered = users.filter((u) => String(u._id || u.id) !== sid);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
       return { message: "deleted" };
     }

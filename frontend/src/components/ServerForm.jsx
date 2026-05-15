@@ -14,7 +14,7 @@ function getInitials(name) {
   return (parts[0]?.[0] || "") + (parts[1]?.[0] || parts[0]?.[1] || "");
 }
 
-export default function ServerForm({ editing, onSaved, onCancel, toast }) {
+export default function ServerForm({ editing, onSaved, onCancel, toast, selfEditVerification = null }) {
   const { canEdit } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
@@ -65,6 +65,14 @@ export default function ServerForm({ editing, onSaved, onCancel, toast }) {
       setErrors({});
     }
   }, [editing]);
+
+  const isSelfEdit = Boolean(
+    selfEditVerification &&
+      editing &&
+      String(editing._id || editing.id) === String(selfEditVerification.servidorId)
+  );
+
+  const formEnabled = canEdit || isSelfEdit;
 
   function updateField(field, value) {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -147,8 +155,8 @@ export default function ServerForm({ editing, onSaved, onCancel, toast }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!canEdit) {
-      toast?.error("Faça login como editor para salvar alterações.");
+    if (!formEnabled) {
+      toast?.error("Faça login como editor ou use “Atualizar meu cadastro” para alterar seus dados.");
       return;
     }
 
@@ -166,7 +174,7 @@ export default function ServerForm({ editing, onSaved, onCancel, toast }) {
       }
 
       const userData = {
-        name: formData.name.trim(),
+        name: isSelfEdit ? String(editing.name || "").trim() : formData.name.trim(),
         photo,
         funcao: formData.funcao.trim() || null,
         inicio: formData.inicio ? formData.inicio : null,
@@ -181,7 +189,15 @@ export default function ServerForm({ editing, onSaved, onCancel, toast }) {
 
       const editId = editing?._id || editing?.id;
       if (editId) {
-        await storageService.updateUser(editId, userData);
+        if (isSelfEdit) {
+          await storageService.updateUser(editId, userData, {
+            selfEdit: true,
+            telefoneUltimos4: selfEditVerification.telefoneUltimos4,
+            verificacaoNascimento: selfEditVerification.verificacaoNascimento,
+          });
+        } else {
+          await storageService.updateUser(editId, userData);
+        }
         toast?.success("Servidor atualizado com sucesso!");
       } else {
         await storageService.createUser(userData);
@@ -199,7 +215,13 @@ export default function ServerForm({ editing, onSaved, onCancel, toast }) {
 
   return (
     <form onSubmit={handleSubmit} className="form">
-      <fieldset className="server-form-fieldset" disabled={!canEdit}>
+      <fieldset className="server-form-fieldset" disabled={!formEnabled}>
+      {isSelfEdit && (
+        <p className="muted small-hint server-form-self-hint">
+          Você está editando seu próprio cadastro. O <strong>nome completo</strong> não pode ser alterado aqui. A foto
+          é opcional. Para apagar o cadastro, fale com um editor.
+        </p>
+      )}
       <div className="form-grid">
         <label className={errors.name ? "field-error" : ""}>
           Nome completo *
@@ -207,6 +229,8 @@ export default function ServerForm({ editing, onSaved, onCancel, toast }) {
             required
             name="name"
             value={formData.name}
+            readOnly={isSelfEdit}
+            aria-readonly={isSelfEdit || undefined}
             onChange={(e) => updateField("name", e.target.value)}
             placeholder="Ex: João Pedro da Silva"
           />

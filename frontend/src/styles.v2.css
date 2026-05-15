@@ -2182,6 +2182,61 @@ main {
   white-space: nowrap;
 }
 
+.servidores-btn-self {
+  white-space: nowrap;
+}
+
+.servidor-self-session-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -6px 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #f0f7ff, #e4eef8);
+  border: 1px solid #c8daf3;
+  font-size: 13px;
+  color: var(--primary-900);
+}
+
+.servidor-self-session-bar .btn.small {
+  flex-shrink: 0;
+}
+
+.server-form-self-hint {
+  grid-column: 1 / -1;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #f6faff;
+  border: 1px solid #d6e6fa;
+}
+
+.servidor-self-modal {
+  max-width: 440px;
+}
+
+.servidor-self-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.servidor-self-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--primary-800);
+}
+
+.servidor-self-form input,
+.servidor-self-form select {
+  font-weight: 500;
+}
+
 .servidores-form-backdrop {
   position: fixed;
   inset: 0;
