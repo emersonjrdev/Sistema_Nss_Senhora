@@ -3,18 +3,14 @@ import { useAuth } from "../context/AuthContext";
 import { storageService } from "../services/storageService";
 import DetailsModal from "./DetailsModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import ServerAvatar from "./ServerAvatar";
+import PhotoLightbox from "./PhotoLightbox";
 import SearchFilters from "./SearchFilters";
 import { formatDateOnlyPtBR, calendarDateSortKey } from "../utils/dateOnly";
 import StatusBadge from "./StatusBadge";
 import EmptyState from "./EmptyState";
 
 const ITEMS_PER_PAGE = 8;
-
-function getAvatarFallback(name) {
-  const first = (name || "").split(" ").filter(Boolean);
-  if (!first.length) return "SA";
-  return ((first[0]?.[0] || "") + (first[1]?.[0] || first[0]?.[1] || "")).toUpperCase();
-}
 
 export default function ServerList({ onEdit, refreshTrigger, toast }) {
   const { canEdit } = useAuth();
@@ -27,6 +23,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
     period: "",
   });
   const [selected, setSelected] = useState(null);
+  const [photoLightbox, setPhotoLightbox] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -177,13 +174,20 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
               {paginatedServers.map((s) => (
                 <tr key={s._id || s.id} className="server-row">
                   <td>
-                    {s.photo ? (
-                      <img src={s.photo} alt={s.name} className="thumb" />
-                    ) : (
-                      <div className="thumb-placeholder" aria-label="Sem foto">
-                        {getAvatarFallback(s.name)}
-                      </div>
-                    )}
+                    <ServerAvatar
+                      photo={s.photo}
+                      name={s.name}
+                      variant="list"
+                      onPhotoClick={
+                        s.photo
+                          ? () =>
+                              setPhotoLightbox({
+                                src: s.photo,
+                                alt: s.name ? `Foto de ${s.name}` : "Foto do servidor",
+                              })
+                          : undefined
+                      }
+                    />
                   </td>
                   <td className="nome-cell">{s.name}</td>
                   <td><span className="funcao-badge">{s.funcao || "-"}</span></td>
@@ -239,13 +243,20 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
           {paginatedServers.map((s) => (
             <article key={`mobile-${s._id || s.id}`} className="server-mobile-card">
               <div className="server-mobile-header">
-                {s.photo ? (
-                  <img src={s.photo} alt={s.name} className="thumb" />
-                ) : (
-                  <div className="thumb-placeholder" aria-label="Sem foto">
-                    {getAvatarFallback(s.name)}
-                  </div>
-                )}
+                <ServerAvatar
+                  photo={s.photo}
+                  name={s.name}
+                  variant="list"
+                  onPhotoClick={
+                    s.photo
+                      ? () =>
+                          setPhotoLightbox({
+                            src: s.photo,
+                            alt: s.name ? `Foto de ${s.name}` : "Foto do servidor",
+                          })
+                      : undefined
+                  }
+                />
                 <div className="server-mobile-identification">
                   <h4>{s.name}</h4>
                   <span className="funcao-badge">{s.funcao || "Sem função"}</span>
@@ -336,7 +347,16 @@ export default function ServerList({ onEdit, refreshTrigger, toast }) {
         </div>
       )}
 
-      {selected && <DetailsModal server={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <DetailsModal server={selected} onClose={() => setSelected(null)} />
+      )}
+      {photoLightbox && (
+        <PhotoLightbox
+          src={photoLightbox.src}
+          alt={photoLightbox.alt}
+          onClose={() => setPhotoLightbox(null)}
+        />
+      )}
       
       {deletingId && (
         <ConfirmDeleteModal
