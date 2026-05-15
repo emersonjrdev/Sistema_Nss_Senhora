@@ -53,6 +53,13 @@ export const MODULES = [
     status: "ativo",
   },
   {
+    id: "importacao-coroinhas",
+    label: "Importar coroinhas",
+    shortLabel: "Importar",
+    description: "Cruzar Excel de inscrições com Word de formação e cadastrar.",
+    status: "ativo",
+  },
+  {
     id: "historico",
     label: "Histórico do servidor",
     shortLabel: "Histórico",

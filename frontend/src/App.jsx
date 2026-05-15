@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import ToastContainer from "./components/ToastContainer";
 import HeaderInstitucional from "./components/HeaderInstitucional";
 import AppSidebar from "./components/AppSidebar";
@@ -10,6 +10,8 @@ import EventosView from "./views/EventosView";
 import EscalasView from "./views/EscalasView";
 import PresencaView from "./views/PresencaView";
 import HistoricoView from "./views/HistoricoView";
+
+const CoroinhaImportView = lazy(() => import("./views/CoroinhaImportView"));
 import { getModuleById } from "./config/modules";
 import { storageService } from "./services/storageService";
 import { useToast } from "./hooks/useToast";
@@ -81,6 +83,16 @@ export default function App() {
         return <PresencaView servidores={servidores} />;
       case "eventos":
         return <EventosView toast={toast} servidores={servidores} />;
+      case "importacao-coroinhas":
+        return (
+          <Suspense fallback={<p className="muted module-section-header">Carregando importação…</p>}>
+            <CoroinhaImportView
+              servidores={servidores}
+              toast={toast}
+              onImported={() => setRefreshList((n) => n + 1)}
+            />
+          </Suspense>
+        );
       case "historico":
         return <HistoricoView servidores={servidores} toast={toast} />;
       default:

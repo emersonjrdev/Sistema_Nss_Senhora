@@ -2284,3 +2284,91 @@ main {
 .server-form-fieldset:disabled {
   opacity: 0.72;
 }
+
+/* Importação coroinhas (Excel + Word) */
+.module-coroinha-import .coroinha-import-card {
+  margin-bottom: 16px;
+}
+
+.coroinha-import-files {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.coroinha-file-label span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-800);
+  margin-bottom: 6px;
+}
+
+.coroinha-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.coroinha-meta {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.coroinha-import-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.coroinha-table-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: 12px;
+}
+
+.coroinha-table {
+  min-width: 640px;
+}
+
+.coroinha-manual-add {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.coroinha-manual-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.coroinha-manual-row select {
+  flex: 1;
+  min-width: 200px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bfd1e9;
+  font-size: 14px;
+}
+
+.coroinha-warn-card {
+  border-left: 4px solid var(--warning);
+  background: #fffbf0;
+}
+
+@media (max-width: 640px) {
+  .coroinha-import-actions .btn {
+    width: 100%;
+    min-height: 46px;
+  }
+}
