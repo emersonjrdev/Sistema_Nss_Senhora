@@ -31,6 +31,187 @@ const KEY_COM_TIPO = "EM QUAL COMUNIDADE VOCÊ PARTICIPA";
 const KEY_COM_NOME = "SE FOR COMUNIDADE,QUAL COMUNIDADE?";
 const KEY_SAC = "SACRAMENTOS";
 
+/** Primeiros nomes masculinos comuns (normalizados: sem acento, minúsculas). */
+const PRENOMES_M = new Set(
+  [
+    "anthony",
+    "antony",
+    "bento",
+    "bernardo",
+    "bruno",
+    "caio",
+    "carlos",
+    "daniel",
+    "davi",
+    "diego",
+    "eduardo",
+    "emanuel",
+    "enzo",
+    "felipe",
+    "fernando",
+    "francisco",
+    "gabriel",
+    "guilherme",
+    "heitor",
+    "henrique",
+    "igor",
+    "isaac",
+    "jose",
+    "joao",
+    "juan",
+    "kaike",
+    "kaique",
+    "kevin",
+    "leonardo",
+    "lorenzo",
+    "lucas",
+    "luis",
+    "luiz",
+    "mateus",
+    "matheus",
+    "miguel",
+    "murilo",
+    "nicolas",
+    "nicollas",
+    "otavio",
+    "pablo",
+    "patrick",
+    "pedro",
+    "rafael",
+    "rodrigo",
+    "samuel",
+    "thales",
+    "theo",
+    "thiago",
+    "thomas",
+    "tomas",
+    "vinicius",
+    "vitor",
+    "william",
+    "yago",
+    "yuri",
+  ].map((w) => stripAccents(w))
+);
+
+/** Primeiros nomes femininos comuns (mesma normalização). */
+const PRENOMES_F = new Set(
+  [
+    "alice",
+    "ana",
+    "anna",
+    "arielle",
+    "beatriz",
+    "bianca",
+    "camila",
+    "carolina",
+    "catarina",
+    "celina",
+    "clara",
+    "dandara",
+    "daniela",
+    "eduarda",
+    "elisa",
+    "emanuela",
+    "emily",
+    "evelyn",
+    "fernanda",
+    "gabriela",
+    "giovana",
+    "giulyah",
+    "helena",
+    "heloisa",
+    "isabel",
+    "isabela",
+    "isabelly",
+    "isabely",
+    "isadora",
+    "julia",
+    "juliana",
+    "kamila",
+    "larissa",
+    "laura",
+    "leticia",
+    "lia",
+    "livia",
+    "luiza",
+    "manuela",
+    "manuella",
+    "manuelle",
+    "maria",
+    "mariah",
+    "marina",
+    "melissa",
+    "mickaelly",
+    "mychelle",
+    "natalia",
+    "nicole",
+    "olivia",
+    "rafaela",
+    "sara",
+    "sofia",
+    "talita",
+    "theodora",
+    "valentina",
+    "veronica",
+    "vitoria",
+    "yasmin",
+  ].map((w) => stripAccents(w))
+);
+
+/** Termina em “a” mas costuma ser masculino no Brasil. */
+const EXCECOES_PRENOME_A_MASC = new Set(["luca", "nicola", "joshua"]);
+
+function firstNameToken(nomeCompleto) {
+  const parts = String(nomeCompleto || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  return stripAccents(parts[0]).replace(/\./g, "");
+}
+
+/**
+ * Lê sexo/gênero se a planilha tiver pergunta (Google Forms futuro).
+ * @returns {"F" | "M" | null}
+ */
+function sexoDeclaradoNaPlanilha(r) {
+  for (const [key, rawVal] of Object.entries(r)) {
+    const kn = stripAccents(String(key).replace(/\r?\n/g, " "));
+    if (!/sexo|genero|menin[oa]\s+ou\s+menin[oa]/.test(kn)) continue;
+    const v = stripAccents(String(rawVal ?? "").replace(/\s+/g, " ").trim());
+    if (!v) continue;
+    if (v.includes("menina") && !v.includes("menino")) return "F";
+    if (v.includes("menino") && !v.includes("menina")) return "M";
+    if (/^(f|feminino|mulher|garota)\b/.test(v) || v === "f") return "F";
+    if (/^(m|masculino|homem|garoto)\b/.test(v) || v === "m") return "M";
+  }
+  return null;
+}
+
+/**
+ * Estima sexo pelo primeiro nome (heurística para pastoral mista sem coluna de sexo).
+ * @returns {"F" | "M" | null}
+ */
+export function inferSexoPorPrenome(nomeCompleto) {
+  const pren = firstNameToken(nomeCompleto);
+  if (!pren || pren.length < 2) return null;
+  if (PRENOMES_F.has(pren)) return "F";
+  if (PRENOMES_M.has(pren)) return "M";
+  if (pren.length >= 4 && pren.endsWith("a") && !EXCECOES_PRENOME_A_MASC.has(pren)) return "F";
+  if (pren.length >= 4 && pren.endsWith("o")) return "M";
+  return null;
+}
+
+/** Função no cadastro geral (valores iguais ao formulário de servidores). */
+export function inferFuncaoImportacaoCoroinha(row) {
+  const r = row && typeof row === "object" ? row : {};
+  const declared = r._formRow ? sexoDeclaradoNaPlanilha(r._formRow) : null;
+  const sexo = declared ?? inferSexoPorPrenome(r.nomeCompleto);
+  if (sexo === "F") return "Filhas de Maria";
+  if (sexo === "M") return "Coroinha";
+  return "Coroinha";
+}
+
 export function sheetRowToPerson(rawRow) {
   const r = normalizeSheetKeys(rawRow);
   return {
@@ -43,6 +224,8 @@ export function sheetRowToPerson(rawRow) {
     comunidadeTipo: String(r[KEY_COM_TIPO] ?? "").trim(),
     comunidadeNome: String(r[KEY_COM_NOME] ?? "").trim(),
     sacramentos: String(r[KEY_SAC] ?? "").trim(),
+    /** Linha completa da planilha (para futuras colunas, ex.: sexo). */
+    _formRow: r,
   };
 }
 

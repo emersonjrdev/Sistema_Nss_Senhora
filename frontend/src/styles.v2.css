@@ -2447,7 +2447,19 @@ main {
 }
 
 .coroinha-table {
-  min-width: 640px;
+  min-width: 720px;
+}
+
+.coroinha-funcao-select {
+  min-width: 148px;
+  max-width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bfd1e9;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-800);
+  background: #fff;
 }
 
 .coroinha-manual-add {

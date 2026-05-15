@@ -12,7 +12,10 @@ import {
   saveDraft,
   clearDraft,
   stripAccents,
+  inferFuncaoImportacaoCoroinha,
 } from "../utils/coroinhaImport";
+
+const FUNCOES_IMPORTACAO = ["Filhas de Maria", "Coroinha"];
 
 function rowToUserPayload(row) {
   const tel = row.telefone ? maskPhoneBR(row.telefone) : "";
@@ -34,7 +37,7 @@ function rowToUserPayload(row) {
 
   return {
     name: row.nomeCompleto.trim(),
-    funcao: "Coroinha",
+    funcao: row.funcao || inferFuncaoImportacaoCoroinha(row),
     telefone: tel || null,
     local,
     comunidade: com,
@@ -67,7 +70,12 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
       toast?.info("Não há rascunho salvo neste navegador.");
       return;
     }
-    setRows(d.rows);
+    setRows(
+      d.rows.map((r) => ({
+        ...r,
+        funcao: r.funcao || inferFuncaoImportacaoCoroinha(r),
+      }))
+    );
     setUnmatchedDocx([]);
     setRemainingExcel([]);
     setMeta((m) => ({ ...m, fromDraft: true }));
@@ -124,6 +132,7 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
           matched.map((r) => ({
             ...r,
             id: r.id || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            funcao: inferFuncaoImportacaoCoroinha(r),
           }))
         );
         setUnmatchedDocx(umd);
@@ -146,6 +155,10 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
     setRows((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
+  const setRowFuncao = useCallback((id, funcao) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, funcao } : r)));
+  }, []);
+
   const addFromRemaining = useCallback(() => {
     if (manualPick === "") return;
     const idx = Number(manualPick);
@@ -158,6 +171,7 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         docName: "(inclusão manual)",
         ...p,
+        funcao: inferFuncaoImportacaoCoroinha(p),
       },
     ]);
     setRemainingExcel((prev) => prev.filter((_, i) => i !== idx));
@@ -273,8 +287,9 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
             </button>
           </div>
           <p className="muted small-hint">
-            Confira telefone e comunidade. Quem já existir com o mesmo nome (ignorando maiúsculas/acentos) será
-            ignorado.
+            A <strong>função</strong> é sugerida pelo primeiro nome (meninas → Filhas de Maria; meninos → Coroinha).
+            Se a planilha passar a ter coluna de sexo, ela terá prioridade. Confira telefone e comunidade; quem já
+            existir com o mesmo nome (ignorando maiúsculas/acentos) será ignorado.
           </p>
           <div className="coroinha-table-wrap">
             <table className="table coroinha-table">
@@ -282,6 +297,7 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
                 <tr>
                   <th>Nome (planilha)</th>
                   <th>Como no Word</th>
+                  <th>Função</th>
                   <th>Idade</th>
                   <th>Telefone</th>
                   <th>Comunidade</th>
@@ -293,6 +309,20 @@ export default function CoroinhaImportView({ servidores, toast, onImported }) {
                   <tr key={r.id}>
                     <td className="nome-cell">{r.nomeCompleto}</td>
                     <td>{r.docName}</td>
+                    <td>
+                      <select
+                        className="coroinha-funcao-select"
+                        value={r.funcao || inferFuncaoImportacaoCoroinha(r)}
+                        onChange={(e) => setRowFuncao(r.id, e.target.value)}
+                        aria-label={`Função de ${r.nomeCompleto}`}
+                      >
+                        {FUNCOES_IMPORTACAO.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
                     <td>{r.idade || "—"}</td>
                     <td>{r.telefone ? maskPhoneBR(r.telefone) : "—"}</td>
                     <td>{r.comunidadeNome || r.comunidadeTipo || "—"}</td>
