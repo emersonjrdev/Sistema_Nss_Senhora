@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => {
     const authReady = status.checked;
     const editorAuthRequired = status.editorAuthRequired;
-    const canEdit = !authReady || auth.canEditNow(editorAuthRequired);
+    const canEdit = authReady ? auth.canEditNow(editorAuthRequired) : false;
     return {
       authReady,
       editorAuthRequired,

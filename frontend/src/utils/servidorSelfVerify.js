@@ -1,5 +1,15 @@
 import { toCalendarDateString } from "./dateOnly";
 
+/** ID estável para comparar documentos (Mongo _id object ou string, ou id local). */
+export function entityId(ent) {
+  if (!ent) return "";
+  const raw = ent._id ?? ent.id;
+  if (raw != null && typeof raw === "object" && typeof raw.toString === "function") {
+    return String(raw.toString());
+  }
+  return String(raw ?? "");
+}
+
 export function digitsOnly(s) {
   return String(s || "").replace(/\D/g, "");
 }

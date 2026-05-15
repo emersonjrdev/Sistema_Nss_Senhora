@@ -9,6 +9,7 @@ import SearchFilters from "./SearchFilters";
 import { formatDateOnlyPtBR, calendarDateSortKey } from "../utils/dateOnly";
 import StatusBadge from "./StatusBadge";
 import EmptyState from "./EmptyState";
+import { entityId } from "../utils/servidorSelfVerify";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -172,7 +173,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast, selfServidor
             </thead>
             <tbody>
               {paginatedServers.map((s) => {
-                const rowId = String(s._id || s.id);
+                const rowId = entityId(s);
                 const podeEditar = canEdit || (selfServidorId && rowId === String(selfServidorId));
                 return (
                 <tr key={s._id || s.id} className="server-row">
@@ -246,7 +247,7 @@ export default function ServerList({ onEdit, refreshTrigger, toast, selfServidor
       {!loading && sortedServers.length > 0 && (
         <div className="mobile-cards-list">
           {paginatedServers.map((s) => {
-            const rowId = String(s._id || s.id);
+            const rowId = entityId(s);
             const podeEditar = canEdit || (selfServidorId && rowId === String(selfServidorId));
             return (
             <article key={`mobile-${s._id || s.id}`} className="server-mobile-card">

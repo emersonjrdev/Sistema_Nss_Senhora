@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { storageService } from "../services/storageService";
-import { canVerifyServidor } from "../utils/servidorSelfVerify";
+import { canVerifyServidor, entityId } from "../utils/servidorSelfVerify";
 
 export default function ServidorSelfUnlockModal({ open, onClose, servidores, onUnlocked, toast }) {
   const [servidorId, setServidorId] = useState("");
@@ -25,7 +25,7 @@ export default function ServidorSelfUnlockModal({ open, onClose, servidores, onU
 
   if (!open) return null;
 
-  const selected = ordenados.find((s) => String(s._id || s.id) === servidorId);
+  const selected = ordenados.find((s) => entityId(s) === servidorId);
   const podeVerificar = selected ? canVerifyServidor(selected) : false;
 
   async function handleSubmit(e) {
@@ -97,7 +97,7 @@ export default function ServidorSelfUnlockModal({ open, onClose, servidores, onU
             >
               <option value="">Selecione…</option>
               {ordenados.map((s) => {
-                const id = String(s._id || s.id);
+                const id = entityId(s);
                 const ok = canVerifyServidor(s);
                 return (
                   <option key={id} value={id} disabled={!ok}>

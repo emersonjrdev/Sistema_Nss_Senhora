@@ -4,6 +4,7 @@ import { storageService } from "../services/storageService";
 import { uploadService } from "../services/uploadService";
 import { toCalendarDateString } from "../utils/dateOnly";
 import { maskPhoneBR, isValidBrPhoneMasked } from "../utils/phoneMask";
+import { entityId } from "../utils/servidorSelfVerify";
 
 const DEFAULT_STATUS = "Ativo";
 
@@ -67,9 +68,9 @@ export default function ServerForm({ editing, onSaved, onCancel, toast, selfEdit
   }, [editing]);
 
   const isSelfEdit = Boolean(
-    selfEditVerification &&
+    selfEditVerification?.servidorId &&
       editing &&
-      String(editing._id || editing.id) === String(selfEditVerification.servidorId)
+      entityId(editing) === String(selfEditVerification.servidorId)
   );
 
   const formEnabled = canEdit || isSelfEdit;

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import DashboardCards from "../components/DashboardCards";
 import ServerForm from "../components/ServerForm";
 import ServerList from "../components/ServerList";
 import ServidorSelfUnlockModal from "../components/ServidorSelfUnlockModal";
 import { useAuth } from "../context/AuthContext";
+import { entityId } from "../utils/servidorSelfVerify";
 
 export default function ServidoresView({
   servidores,
@@ -15,20 +16,26 @@ export default function ServidoresView({
   refreshTrigger,
   toast,
 }) {
-  const { canEdit } = useAuth();
+  const { canEdit, editorAuthRequired } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
   const [selfModalOpen, setSelfModalOpen] = useState(false);
   /** Sessão de edição própria: mantida após verificar até salvar ou "Sair". */
   const [selfEditCtx, setSelfEditCtx] = useState(null);
+  const prevCanEditRef = useRef(null);
 
   const closeForm = useCallback(() => {
     setFormOpen(false);
     onCancelForm?.();
   }, [onCancelForm]);
 
+  /** Só limpa "meu cadastro" quando o utilizador passa a ter poder de editor (ex.: login), não quando canEdit já era true. */
   useEffect(() => {
-    if (canEdit) setSelfEditCtx(null);
-  }, [canEdit]);
+    const prev = prevCanEditRef.current;
+    prevCanEditRef.current = canEdit;
+    if (prev !== null && editorAuthRequired && prev === false && canEdit === true) {
+      setSelfEditCtx(null);
+    }
+  }, [canEdit, editorAuthRequired]);
 
   const openCreate = useCallback(() => {
     if (!canEdit) {
@@ -51,7 +58,7 @@ export default function ServidoresView({
         onEdit(s);
         return;
       }
-      if (selfEditCtx && String(selfEditCtx.servidorId) === String(s._id || s.id)) {
+      if (selfEditCtx && String(selfEditCtx.servidorId) === entityId(s)) {
         onEdit(s);
         setFormOpen(true);
         return;
@@ -90,9 +97,7 @@ export default function ServidoresView({
   }, [formOpen, closeForm]);
 
   const isSelfDrawer =
-    Boolean(selfEditCtx) &&
-    editing &&
-    String(editing._id || editing.id) === String(selfEditCtx.servidorId);
+    Boolean(selfEditCtx) && editing && entityId(editing) === String(selfEditCtx.servidorId);
 
   const drawerTitle = isSelfDrawer ? "Meu cadastro" : editing ? "Editar servidor" : "Novo servidor";
 
@@ -159,7 +164,7 @@ export default function ServidoresView({
         servidores={servidores}
         toast={toast}
         onUnlocked={(unlock) => {
-          const srv = servidores.find((s) => String(s._id || s.id) === unlock.servidorId);
+          const srv = servidores.find((s) => entityId(s) === unlock.servidorId);
           if (!srv) return;
           setSelfEditCtx(unlock);
           onEdit(srv);
@@ -209,7 +214,7 @@ export default function ServidoresView({
                   onSaved={handleSavedAndClose}
                   onCancel={closeForm}
                   toast={toast}
-                  selfEditVerification={isSelfDrawer ? selfEditCtx : null}
+                  selfEditVerification={formOpen && selfEditCtx ? selfEditCtx : null}
                 />
               </div>
             </aside>
