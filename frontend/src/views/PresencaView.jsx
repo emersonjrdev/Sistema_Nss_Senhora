@@ -8,6 +8,36 @@ function serverId(s) {
   return String(s._id || s.id || "");
 }
 
+function stripAccents(s) {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+/** Grupos exibidos na chamada (ordem fixa). */
+const GRUPOS_FUNCAO = [
+  { id: "filhas", label: "Filhas de Maria" },
+  { id: "coroinha", label: "Coroinha" },
+  { id: "acolito", label: "Acólito" },
+  { id: "outros", label: "Outros" },
+];
+
+function grupoPresenca(funcao) {
+  const f = stripAccents(funcao);
+  if (f.includes("filha")) return "filhas";
+  if (f.includes("coroinha")) return "coroinha";
+  if (f.includes("acolito")) return "acolito";
+  return "outros";
+}
+
+function sortByNome(a, b) {
+  return String(a.name || "").localeCompare(String(b.name || ""), "pt-BR", {
+    sensitivity: "base",
+  });
+}
+
 export default function PresencaView({ servidores }) {
   const { canEdit } = useAuth();
   const [eventos, setEventos] = useState([]);
@@ -54,6 +84,20 @@ export default function PresencaView({ servidores }) {
     return servidores;
   }, [servidores, escalaDoDia]);
 
+  const gruposPresenca = useMemo(() => {
+    const buckets = Object.fromEntries(GRUPOS_FUNCAO.map((g) => [g.id, []]));
+    for (const s of listaPresenca) {
+      buckets[grupoPresenca(s.funcao)].push(s);
+    }
+    for (const id of Object.keys(buckets)) {
+      buckets[id].sort(sortByNome);
+    }
+    return GRUPOS_FUNCAO.map((g) => ({
+      ...g,
+      servidores: buckets[g.id],
+    })).filter((g) => g.servidores.length > 0);
+  }, [listaPresenca]);
+
   async function setStatus(servidorId, status) {
     if (!canEdit) return;
     if (!eventoId) return;
@@ -80,8 +124,10 @@ export default function PresencaView({ servidores }) {
       <header className="module-section-header">
         <h2>Controle de presença</h2>
         <p>
-          Escolha o evento e marque cada servidor. Se existir escala <strong>vinculada ao evento</strong>, ela tem
-          prioridade; senão, usa-se escala na mesma data; caso contrário, listam-se todos os cadastrados.
+          Escolha o evento e marque cada servidor. A lista aparece em <strong>ordem alfabética</strong>, separada por{" "}
+          <strong>Filhas de Maria</strong>, <strong>Coroinha</strong> e <strong>Acólito</strong>. Se existir escala
+          vinculada ao evento, ela tem prioridade; senão, usa-se escala na mesma data; caso contrário, listam-se todos os
+          cadastrados.
         </p>
       </header>
 
@@ -118,46 +164,58 @@ export default function PresencaView({ servidores }) {
       {listaPresenca.length === 0 ? (
         <p className="empty-inline">Nenhum servidor na lista para este evento.</p>
       ) : (
-        <ul className="presenca-lista">
-          {listaPresenca.map((s) => {
-            const sid = serverId(s);
-            const st = mapa[sid];
-            return (
-              <li key={sid} className="presenca-linha">
-                <div>
-                  <strong>{s.name}</strong>
-                  {s.funcao && <span className="funcao-badge">{s.funcao}</span>}
-                </div>
-                <div className="presenca-botoes">
-                  <button
-                    type="button"
-                    className={`btn small ${st === "presente" ? "" : "secondary"}`}
-                    onClick={() => setStatus(sid, "presente")}
-                    disabled={!canEdit}
-                  >
-                    Presente
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn small ${st === "ausente" ? "danger" : "secondary"}`}
-                    onClick={() => setStatus(sid, "ausente")}
-                    disabled={!canEdit}
-                  >
-                    Ausente
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn small ${st === "justificado" ? "info" : "secondary"}`}
-                    onClick={() => setStatus(sid, "justificado")}
-                    disabled={!canEdit}
-                  >
-                    Justificado
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="presenca-grupos">
+          {gruposPresenca.map((grupo) => (
+            <section key={grupo.id} className={`presenca-grupo presenca-grupo--${grupo.id} card`}>
+              <h3 className="presenca-grupo-titulo">
+                {grupo.label}
+                <span className="presenca-grupo-contagem">{grupo.servidores.length}</span>
+              </h3>
+              <ul className="presenca-lista">
+                {grupo.servidores.map((s) => {
+                  const sid = serverId(s);
+                  const st = mapa[sid];
+                  return (
+                    <li key={sid} className="presenca-linha">
+                      <div className="presenca-linha-nome">
+                        <strong>{s.name}</strong>
+                        {s.funcao && grupo.id === "outros" && (
+                          <span className="funcao-badge">{s.funcao}</span>
+                        )}
+                      </div>
+                      <div className="presenca-botoes">
+                        <button
+                          type="button"
+                          className={`btn small ${st === "presente" ? "" : "secondary"}`}
+                          onClick={() => setStatus(sid, "presente")}
+                          disabled={!canEdit}
+                        >
+                          Presente
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn small ${st === "ausente" ? "danger" : "secondary"}`}
+                          onClick={() => setStatus(sid, "ausente")}
+                          disabled={!canEdit}
+                        >
+                          Ausente
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn small ${st === "justificado" ? "info" : "secondary"}`}
+                          onClick={() => setStatus(sid, "justificado")}
+                          disabled={!canEdit}
+                        >
+                          Justificado
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
     </section>
   );
