@@ -2551,6 +2551,31 @@ main {
   background: #fffbf0;
 }
 
+.module-matriz-import .matriz-paste-label {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--primary-800);
+}
+
+.module-matriz-import .matriz-paste-area {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  border: 1px solid #bfd1e9;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.module-matriz-import .matriz-file-label {
+  margin-top: 10px;
+}
+
 @media (max-width: 640px) {
   .coroinha-import-actions .btn {
     width: 100%;

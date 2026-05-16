@@ -55,8 +55,15 @@ export const MODULES = [
   {
     id: "importacao-coroinhas",
     label: "Importar coroinhas",
-    shortLabel: "Importar",
+    shortLabel: "Coroinhas",
     description: "Cruzar Excel de inscrições com Word de formação e cadastrar.",
+    status: "ativo",
+  },
+  {
+    id: "importacao-matriz",
+    label: "Importar Matriz (só nomes)",
+    shortLabel: "Matriz",
+    description: "Lista de quem já serve na Matriz — Nossa Senhora das Graças.",
     status: "ativo",
   },
   {

@@ -12,6 +12,7 @@ import PresencaView from "./views/PresencaView";
 import HistoricoView from "./views/HistoricoView";
 
 const CoroinhaImportView = lazy(() => import("./views/CoroinhaImportView"));
+const ServidoresMatrizImportView = lazy(() => import("./views/ServidoresMatrizImportView"));
 import { getModuleById } from "./config/modules";
 import { storageService } from "./services/storageService";
 import { useToast } from "./hooks/useToast";
@@ -87,6 +88,16 @@ export default function App() {
         return (
           <Suspense fallback={<p className="muted module-section-header">Carregando importação…</p>}>
             <CoroinhaImportView
+              servidores={servidores}
+              toast={toast}
+              onImported={() => setRefreshList((n) => n + 1)}
+            />
+          </Suspense>
+        );
+      case "importacao-matriz":
+        return (
+          <Suspense fallback={<p className="muted module-section-header">Carregando importação…</p>}>
+            <ServidoresMatrizImportView
               servidores={servidores}
               toast={toast}
               onImported={() => setRefreshList((n) => n + 1)}
